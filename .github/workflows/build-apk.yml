@@ -21,11 +21,13 @@ jobs:
       - name: Generate Android platform files
         run: flutter create --platforms=android .
 
+      - name: Set minSdkVersion to 24 (required by flutter_tts)
+        run: |
+          sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 24/' android/app/build.gradle
+          sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 24/' android/app/build.gradle
+
       - name: Install dependencies
         run: flutter pub get
-
-      - name: Flutter doctor
-        run: flutter doctor -v
 
       - name: Build APK (release)
         run: flutter build apk --release
