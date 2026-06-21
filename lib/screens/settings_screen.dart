@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
 
-/// 设置页面
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
@@ -12,14 +11,11 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   late TextEditingController _apiController;
-  late TextEditingController _serverController;
 
   @override
   void initState() {
     super.initState();
-    final p = context.read<AppProvider>();
-    _apiController = TextEditingController(text: p.apiKey ?? '');
-    _serverController = TextEditingController(text: p.serverUrl);
+    _apiController = TextEditingController(text: context.read<AppProvider>().apiKey ?? '');
   }
 
   @override
@@ -29,53 +25,54 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          const Text('信令服务器', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const Text('翻译引擎', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
-          TextField(
-            controller: _serverController,
-            decoration: InputDecoration(
-              labelText: 'WebSocket 地址',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              suffixIcon: IconButton(
-                icon: const Icon(Icons.save),
-                onPressed: () {
-                  context.read<AppProvider>().setServerUrl(_serverController.text);
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('已保存')));
-                },
-              ),
-            ),
+          Text(
+            '需要 API Key 以获得高质量翻译。支持 DeepSeek / OpenAI 兼容接口。',
+            style: TextStyle(fontSize: 13, color: Colors.grey[600]),
           ),
-          const SizedBox(height: 24),
-
-          const Text('翻译 API', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           TextField(
             controller: _apiController,
             decoration: InputDecoration(
-              labelText: 'API Key (DeepSeek/OpenAI)',
+              labelText: 'API Key',
+              hintText: 'sk-...',
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               suffixIcon: IconButton(
                 icon: const Icon(Icons.save),
                 onPressed: () {
                   context.read<AppProvider>().setApiKey(_apiController.text);
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('已保存')));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('API Key 已保存')),
+                  );
                 },
               ),
             ),
             obscureText: true,
           ),
+          const SizedBox(height: 32),
+          const Text('使用说明', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          _tip('1. 选择你和对方的语言'),
+          _tip('2. 开启扬声器 (打电话/微信/WhatsApp 时)'),
+          _tip('3. 打开 App 点「开始翻译」'),
+          _tip('4. App 会自动识别并翻译'),
           const SizedBox(height: 24),
           const Text('关于', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          const ListTile(title: const Text('版本'), trailing: const Text('2.0.0')),
+          const ListTile(title: const Text('版本'), trailing: const Text('1.5.0')),
         ],
       ),
     );
   }
 
+  Widget _tip(String text) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 4),
+    child: Row(children: [const Icon(Icons.check, size: 16, color: Colors.green), const SizedBox(width: 8), Expanded(child: Text(text, style: const TextStyle(fontSize: 14)))]),
+  );
+
   @override
   void dispose() {
     _apiController.dispose();
-    _serverController.dispose();
     super.dispose();
   }
 }
