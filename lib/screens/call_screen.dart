@@ -1,44 +1,45 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
+import '../services/call_service.dart';
 
-/// 翻译屏幕 — 实时语音翻译界面
-class TranslateScreen extends StatefulWidget {
-  const TranslateScreen({super.key});
+/// 通话屏幕
+class CallScreen extends StatelessWidget {
+  const CallScreen({super.key});
 
-  @override
-  State<TranslateScreen> createState() => _TranslateScreenState();
-}
-
-class _TranslateScreenState extends State<TranslateScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('实时翻译'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            context.read<AppProvider>().stopTranslation();
-            Navigator.pop(context);
-          },
-        ),
-      ),
       body: Consumer<AppProvider>(
         builder: (context, provider, _) {
+          final state = provider.callState;
           return SafeArea(
             child: Column(
               children: [
-                // 语言状态栏
-                _buildLanguageBar(provider),
+                const Spacer(flex: 2),
+                // 通话状态
+                Text(
+                  state == CallState.calling ? '正在呼叫...' :
+                  state == CallState.ringing ? '响铃中...' :
+                  state == CallState.connected ? '通话中' :
+                  state == CallState.ended ? '已结束' : '',
+                  style: const TextStyle(fontSize: 16, color: Colors.grey),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '${provider.peerLanguage.flag} ${provider.peerLanguage.nativeName}',
+                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                ),
+                const Spacer(),
 
-                const Divider(height: 1),
+                // 翻译面板 (通话中显示)
+                if (state == CallState.connected) _buildTranslationPanel(provider),
 
-                // 翻译区域
-                Expanded(child: _buildTranslationPanel(provider)),
+                const Spacer(flex: 2),
 
                 // 控制按钮
-                _buildControlButton(provider),
+                _buildControls(context, provider, state),
+                const SizedBox(height: 32),
               ],
             ),
           );
@@ -47,87 +48,37 @@ class _TranslateScreenState extends State<TranslateScreen> {
     );
   }
 
-  Widget _buildLanguageBar(AppProvider provider) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text('${provider.myLanguage.flag} ${provider.myLanguage.nativeName}',
-              style: const TextStyle(fontSize: 16)),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 12),
-            child: Icon(Icons.arrow_forward, size: 20),
-          ),
-          Text('${provider.peerLanguage.flag} ${provider.peerLanguage.nativeName}',
-              style: const TextStyle(fontSize: 16)),
-        ],
-      ),
-    );
-  }
-
   Widget _buildTranslationPanel(AppProvider provider) {
-    return Padding(
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 24),
       padding: const EdgeInsets.all(16),
-      child: Column(
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
         children: [
-          // 原文
           Expanded(
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.blue[50],
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('🎤 我说', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
-                  const SizedBox(height: 8),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: Text(
-                        provider.originalText.isEmpty ? '等待语音...' : provider.originalText,
-                        style: TextStyle(fontSize: 20, color: provider.originalText.isEmpty ? Colors.grey[400] : Colors.black87),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('你说的', style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+                const SizedBox(height: 4),
+                Text(provider.originalText.isEmpty ? '等待语音...' : provider.originalText,
+                    style: TextStyle(fontSize: 16, color: provider.originalText.isEmpty ? Colors.grey[400] : Colors.black87)),
+              ],
             ),
           ),
-
-          const SizedBox(height: 12),
-
-          // 翻译结果
+          const Icon(Icons.arrow_forward, size: 20),
           Expanded(
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.green[50],
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('🌍 ${provider.peerLanguage.nativeName}',
-                      style: TextStyle(fontSize: 12, color: Colors.grey[600])),
-                  const SizedBox(height: 8),
-                  if (provider.originalText.isNotEmpty && provider.translatedText.isEmpty)
-                    const LinearProgressIndicator(),
-                  const SizedBox(height: 8),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: Text(
-                        provider.translatedText.isEmpty ? '翻译结果...' : provider.translatedText,
-                        style: TextStyle(fontSize: 20, color: provider.translatedText.isEmpty ? Colors.grey[400] : Colors.black87),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(provider.peerLanguage.nativeName, style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+                const SizedBox(height: 4),
+                Text(provider.translatedText.isEmpty ? '翻译中...' : provider.translatedText,
+                    style: TextStyle(fontSize: 16, color: provider.translatedText.isEmpty ? Colors.grey[400] : Colors.black87)),
+              ],
             ),
           ),
         ],
@@ -135,34 +86,68 @@ class _TranslateScreenState extends State<TranslateScreen> {
     );
   }
 
-  Widget _buildControlButton(AppProvider provider) {
-    final isTranslating = provider.isTranslating;
+  Widget _buildControls(BuildContext context, AppProvider provider, CallState state) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        // 挂断/拒接
+        if (state == CallState.calling || state == CallState.connected)
+          _ControlButton(
+            icon: Icons.call_end,
+            color: Colors.red,
+            label: '挂断',
+            onPressed: () {
+              provider.endCall();
+              Navigator.pop(context);
+            },
+          ),
+        if (state == CallState.ringing) ...[
+          _ControlButton(
+            icon: Icons.call,
+            color: Colors.green,
+            label: '接听',
+            onPressed: () => provider.acceptIncomingCall(),
+          ),
+          const SizedBox(width: 40),
+          _ControlButton(
+            icon: Icons.call_end,
+            color: Colors.red,
+            label: '拒接',
+            onPressed: () {
+              provider.rejectIncomingCall();
+              Navigator.pop(context);
+            },
+          ),
+        ],
+      ],
+    );
+  }
+}
 
-    return Container(
-      padding: const EdgeInsets.all(24),
-      child: SizedBox(
-        width: double.infinity,
-        height: 56,
-        child: ElevatedButton.icon(
-          onPressed: () {
-            if (isTranslating) {
-              provider.stopTranslation();
-            } else {
-              provider.startTranslation();
-            }
-          },
-          icon: Icon(isTranslating ? Icons.stop : Icons.mic, size: 24),
-          label: Text(isTranslating ? '停止翻译' : '开始翻译',
-              style: const TextStyle(fontSize: 18)),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: isTranslating ? Colors.red : Colors.blue,
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(28),
-            ),
+class _ControlButton extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String label;
+  final VoidCallback onPressed;
+
+  const _ControlButton({required this.icon, required this.color, required this.label, required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        CircleAvatar(
+          radius: 28,
+          backgroundColor: color,
+          child: IconButton(
+            icon: Icon(icon, color: Colors.white),
+            onPressed: onPressed,
           ),
         ),
-      ),
+        const SizedBox(height: 4),
+        Text(label, style: const TextStyle(fontSize: 12)),
+      ],
     );
   }
 }

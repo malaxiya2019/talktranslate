@@ -10,45 +10,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.29.2'
           channel: 'stable'
           architecture: x64
-
       - name: Create Android files
         run: flutter create --platforms=android .
-
-      - name: Show generated files
-        run: cat android/settings.gradle* 2>/dev/null || echo "no settings.gradle found"
-
       - name: Fix Android config
         run: |
-          # minSdk 24 (required by flutter_tts)
-          # minSdk 24 - file is build.gradle.kts (Kotlin DSL)
           sed -i 's/minSdk = .*/minSdk = 24/' android/app/build.gradle.kts
-          echo "=== minSdk ===" && grep "minSdk" android/app/build.gradle.kts
-
-          # Kotlin version - file is settings.gradle.kts (Kotlin DSL)
-          echo "=== settings files ==="
-          find android -name "settings*" -type f
-          echo "=== Kotlin before ==="
-          cat android/settings.gradle.kts 2>/dev/null || echo "no .kts file"
-          # Update Kotlin version (Kotlin DSL syntax)
-          sed -i 's/id("org.jetbrains.kotlin.android") version ".*"/id("org.jetbrains.kotlin.android") version "2.2.20"/' android/settings.gradle.kts 2>/dev/null || true
-          echo "=== Kotlin after ==="
-          grep kotlin android/settings.gradle.kts 2>/dev/null || echo "not found"
-
+          sed -i 's/id("org.jetbrains.kotlin.android") version ".*"/id("org.jetbrains.kotlin.android") version "2.2.20"/' android/settings.gradle.kts
       - name: Get packages
         run: flutter pub get
-
       - name: Build APK
-        run: flutter build apk
-
+        run: flutter build apk --release
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: talktranslate-apk
-          path: build/app/outputs/flutter-apk/*.apk
+          path: build/app/outputs/flutter-apk/app-release.apk
