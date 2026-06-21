@@ -18,14 +18,14 @@ jobs:
           architecture: x64
       - name: Create Android files
         run: flutter create --platforms=android .
-      - name: Fix minSdk
+      - name: Fix Android config
         run: |
-          echo "minSdk before:"
-          grep -r "minSdk" android/app/ 2>/dev/null || echo "not found"
-          sed -i 's/minSdk = .*/minSdk = 24/' android/app/build.gradle.kts 2>/dev/null || true
-          sed -i 's/minSdk = .*/minSdk = 24/' android/app/build.gradle 2>/dev/null || true
-          echo "minSdk after:"
-          grep -r "minSdk" android/app/ 2>/dev/null || echo "still not found"
+          # Fix minSdk
+          sed -i 's/minSdk = .*/minSdk = 24/' android/app/build.gradle.kts
+          grep "minSdk" android/app/build.gradle.kts
+          # Fix Kotlin version
+          sed -i 's/id "org.jetbrains.kotlin.android" version ".*"/id "org.jetbrains.kotlin.android" version "2.0.21"/' android/settings.gradle.kts
+          grep "kotlin" android/settings.gradle.kts
       - name: Get packages
         run: flutter pub get
       - name: Build APK
