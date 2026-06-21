@@ -37,7 +37,7 @@ jobs:
           echo "=== Kotlin before ==="
           cat android/settings.gradle.kts 2>/dev/null || echo "no .kts file"
           # Update Kotlin version (Kotlin DSL syntax)
-          sed -i 's/id("org.jetbrains.kotlin.android") version ".*"/id("org.jetbrains.kotlin.android") version "2.0.21"/' android/settings.gradle.kts 2>/dev/null || true
+          sed -i 's/id("org.jetbrains.kotlin.android") version ".*"/id("org.jetbrains.kotlin.android") version "2.2.20"/' android/settings.gradle.kts 2>/dev/null || true
           echo "=== Kotlin after ==="
           grep kotlin android/settings.gradle.kts 2>/dev/null || echo "not found"
 
