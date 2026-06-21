@@ -16,6 +16,10 @@ jobs:
           flutter-version: '3.29.2'
           channel: 'stable'
           architecture: x64
+      - name: Create Android platform files
+        run: flutter create --platforms=android .
+      - name: Override build.gradle with minSdk 24
+        run: cp android/app/build.gradle android/app/build.gradle.bak && cat android/app/build.gradle.bak | sed 's/flutter.minSdkVersion/24/g' > android/app/build.gradle
       - name: Get packages
         run: flutter pub get
       - name: Build APK
