@@ -22,7 +22,7 @@ jobs:
         run: flutter create --platforms=android .
 
       - name: Show generated files
-        run: cat android/settings.gradle
+        run: cat android/settings.gradle* 2>/dev/null || echo "no settings.gradle found"
 
       - name: Fix Android config
         run: |
