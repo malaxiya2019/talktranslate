@@ -3,8 +3,6 @@ name: Build APK
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
   workflow_dispatch:
 
 jobs:
@@ -19,6 +17,36 @@ jobs:
           flutter-version: '3.29.2'
           channel: 'stable'
           architecture: x64
+
+      - name: Generate Android platform files
+        run: flutter create --platforms=android .
+
+      - name: Configure Android permissions
+        run: |
+          cat > android/app/src/main/AndroidManifest.xml << 'MANIFEST'
+      <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+        <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+        <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
+        <uses-permission android:name="android.permission.INTERNET"/>
+        <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+        <uses-permission android:name="android.permission.BLUETOOTH"/>
+        <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>
+        <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+        <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE"/>
+        <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+        <uses-feature android:name="android.hardware.microphone" android:required="true"/>
+        <uses-feature android:name="android.hardware.wifi" android:required="true"/>
+        <application android:label="TalkTranslate" android:name="\${applicationName}" android:icon="@mipmap/ic_launcher">
+          <activity android:name=".MainActivity" android:exported="true" android:launchMode="singleTop"
+            android:theme="@style/LaunchTheme" android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+            android:hardwareAccelerated="true" android:windowSoftInputMode="adjustResize">
+            <meta-data android:name="io.flutter.embedding.android.NormalTheme" android:resource="@style/NormalTheme"/>
+            <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
+          </activity>
+          <meta-data android:name="flutterEmbedding" android:value="2"/>
+        </application>
+      </manifest>
+      MANIFEST
 
       - name: Install dependencies
         run: flutter pub get
@@ -46,26 +74,3 @@ jobs:
         with:
           name: talktranslate-x86_64
           path: build/app/outputs/flutter-apk/app-x86_64-release.apk
-
-  release:
-    needs: build
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.29.2'
-          channel: 'stable'
-          architecture: x64
-
-      - name: Build App Bundle
-        run: flutter build appbundle --release
-
-      - name: Upload AAB
-        uses: actions/upload-artifact@v4
-        with:
-          name: talktranslate-aab
-          path: build/app/outputs/bundle/release/app-release.aab
