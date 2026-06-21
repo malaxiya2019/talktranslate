@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
+import '../services/overlay_manager.dart';
 
 /// 翻译屏幕 — 大字体悬浮字幕
 class TranslateScreen extends StatefulWidget {
@@ -15,7 +16,12 @@ class _TranslateScreenState extends State<TranslateScreen> with WidgetsBindingOb
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // 尝试启动悬浮窗
+      final hasPerm = await OverlayManager.hasPermission();
+      if (hasPerm) {
+        await OverlayManager.startService();
+      }
       context.read<AppProvider>().startTranslation();
     });
   }
@@ -23,7 +29,18 @@ class _TranslateScreenState extends State<TranslateScreen> with WidgetsBindingOb
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    OverlayManager.hide();
+    OverlayManager.stopService();
     super.dispose();
+  }
+
+  void _updateOverlay(AppProvider provider) {
+    if (provider.originalText.isNotEmpty || provider.translatedText.isNotEmpty) {
+      OverlayManager.showSubtitle(
+        provider.originalText,
+        provider.translatedText.isNotEmpty ? provider.translatedText : '翻译中...',
+      );
+    }
   }
 
   @override
@@ -39,6 +56,8 @@ class _TranslateScreenState extends State<TranslateScreen> with WidgetsBindingOb
       backgroundColor: Colors.black87,
       body: Consumer<AppProvider>(
         builder: (context, provider, _) {
+          // 更新悬浮窗字幕
+          _updateOverlay(provider);
           return SafeArea(
             child: Column(
               children: [

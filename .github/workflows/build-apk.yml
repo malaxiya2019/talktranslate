@@ -18,8 +18,18 @@ jobs:
           architecture: x64
       - name: Create Android files
         run: flutter create --platforms=android .
-      - name: Add permissions
-        run: sed -i '/<application/i\    <uses-permission android:name="android.permission.RECORD_AUDIO"/>' android/app/src/main/AndroidManifest.xml
+
+      - name: Inject overlay service
+        run: |
+          # 复制悬浮窗服务
+          mkdir -p android/app/src/main/java/com/talktranslate/app
+          cp android-overlay/TalkTranslateOverlayService.java android/app/src/main/java/com/talktranslate/app/
+          cp android-overlay/MainActivity.java android/app/src/main/java/com/talktranslate/app/
+
+          # 权限 + 服务声明
+          sed -i 's/<application/<uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"\/><uses-permission android:name="android.permission.FOREGROUND_SERVICE"\/><uses-permission android:name="android.permission.RECORD_AUDIO"\/><application/' android/app/src/main/AndroidManifest.xml
+          sed -i 's/<\/application>/  <service android:name=".TalkTranslateOverlayService" android:exported="false"\/><\/application>/' android/app/src/main/AndroidManifest.xml
+
       - name: Get packages
         run: flutter pub get
       - name: Build APK
