@@ -2,7 +2,25 @@ import 'dart:async';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'translation_service.dart';
 
-/// 翻译引擎 — 持续监听麦克风 → 翻译 → 回调
+/// 说话人
+enum Speaker { me, peer }
+
+/// 一条对话记录
+class ConversationEntry {
+  final Speaker speaker;
+  final String original;
+  final String translated;
+  final DateTime timestamp;
+
+  ConversationEntry({
+    required this.speaker,
+    required this.original,
+    required this.translated,
+    DateTime? timestamp,
+  }) : timestamp = timestamp ?? DateTime.now();
+}
+
+/// 翻译引擎 — 持续监听麦克风 → 翻译 → 双向对话流
 class TranslationEngine {
   final stt.SpeechToText _speech = stt.SpeechToText();
   final TranslationService _translation;
@@ -12,12 +30,15 @@ class TranslationEngine {
   String _myLang = 'zh-CN';
   String _peerLang = 'en-US';
 
+  // 双向字幕追踪
+  Speaker _lastSpeaker = Speaker.peer; // 初始为对方，下一段就是"我"
+  final List<ConversationEntry> _conversation = [];
+
   // 事件流
   final StreamController<TranslateResult> _results = StreamController.broadcast();
   Stream<TranslateResult> get results => _results.stream;
 
-  // 识别文本 (调试)
-  String get currentLang => _myLang;
+  List<ConversationEntry> get conversation => List.unmodifiable(_conversation);
 
   TranslationEngine({required TranslationService translation}) : _translation = translation;
 
@@ -41,6 +62,7 @@ class TranslationEngine {
       return;
     }
     _isRunning = true;
+    _conversation.clear();
     _listen();
   }
 
@@ -63,16 +85,24 @@ class TranslationEngine {
         listenMode: stt.ListenMode.confirmation,
       );
 
-      // 等待结果或超时 (最多等 5 秒)
       await Future.any([
         completer.future,
-        Future.delayed(const Duration(seconds: 5)),
+        Future.delayed(const Duration(seconds: 6)),
       ]);
 
       await _speech.stop();
 
       if (recognized.isNotEmpty) {
-        _results.add(TranslateResult.recognized(recognized, _myLang));
+        // 交替说话人
+        _lastSpeaker = _lastSpeaker == Speaker.me ? Speaker.peer : Speaker.me;
+
+        // 识别事件
+        _results.add(TranslateResult(
+          type: 'recognized',
+          original: recognized,
+          language: _myLang,
+          speaker: _lastSpeaker,
+        ));
 
         // 翻译
         try {
@@ -81,15 +111,27 @@ class TranslationEngine {
             from: _myLang,
             to: _peerLang,
           );
-          _results.add(TranslateResult.translated(recognized, translated, _peerLang));
+
+          _conversation.add(ConversationEntry(
+            speaker: _lastSpeaker,
+            original: recognized,
+            translated: translated,
+          ));
+
+          _results.add(TranslateResult(
+            type: 'translated',
+            original: recognized,
+            translated: translated,
+            language: _peerLang,
+            speaker: _lastSpeaker,
+          ));
         } catch (e) {
-          _results.add(TranslateResult.error('翻译失败: $e'));
+          _results.add(TranslateResult(type: 'error', original: recognized, error: '翻译失败: $e'));
         }
       }
 
-      // 继续下一轮
       if (_isRunning) {
-        await Future.delayed(const Duration(milliseconds: 300));
+        await Future.delayed(const Duration(milliseconds: 400));
       }
     }
   }
@@ -109,26 +151,22 @@ class TranslationEngine {
 
 /// 翻译结果
 class TranslateResult {
-  final String type; // 'recognized' | 'translated' | 'error'
+  final String type;
   final String original;
   final String translated;
   final String? language;
   final String? error;
+  final Speaker? speaker;
 
-  TranslateResult._({
+  TranslateResult({
     required this.type,
     required this.original,
     this.translated = '',
     this.language,
     this.error,
+    this.speaker,
   });
 
-  factory TranslateResult.recognized(String text, String lang) =>
-      TranslateResult._(type: 'recognized', original: text, language: lang);
-
-  factory TranslateResult.translated(String original, String translated, String lang) =>
-      TranslateResult._(type: 'translated', original: original, translated: translated, language: lang);
-
   factory TranslateResult.error(String msg) =>
-      TranslateResult._(type: 'error', original: '', error: msg);
+      TranslateResult(type: 'error', original: '', error: msg);
 }

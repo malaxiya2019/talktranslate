@@ -25,6 +25,10 @@ class AppProvider extends ChangeNotifier {
   String? _apiKey;
   String? get apiKey => _apiKey;
 
+  Speaker? _currentSpeaker;
+  Speaker? get currentSpeaker => _currentSpeaker;
+  List<ConversationEntry> get conversation => engine.conversation;
+
   StreamSubscription? _sub;
 
   AppProvider() {
@@ -33,9 +37,11 @@ class AppProvider extends ChangeNotifier {
       switch (result.type) {
         case 'recognized':
           _originalText = result.original;
+          _currentSpeaker = result.speaker;
           break;
         case 'translated':
           _translatedText = result.translated;
+          _currentSpeaker = result.speaker;
           break;
         case 'error':
           _translatedText = '⚠ ${result.error}';

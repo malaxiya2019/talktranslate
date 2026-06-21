@@ -1,4 +1,4 @@
-package com.talktranslate.app;
+package com.example.talktranslate;
 
 import android.content.Intent;
 import android.content.pm.PackageManager;
