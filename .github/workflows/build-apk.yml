@@ -10,27 +10,37 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.29.2'
           channel: 'stable'
           architecture: x64
+
       - name: Create Android files
         run: flutter create --platforms=android .
+
+      - name: Show generated files
+        run: ls -la android/ && ls -la android/app/
+
       - name: Fix Android config
         run: |
-          # Fix minSdk
-          sed -i 's/minSdk = .*/minSdk = 24/' android/app/build.gradle.kts
-          grep "minSdk" android/app/build.gradle.kts
-          # Fix Kotlin version (try both .kts and .gradle)
-          sed -i 's/id "org.jetbrains.kotlin.android" version ".*"/id "org.jetbrains.kotlin.android" version "2.0.21"/' android/settings.gradle.kts 2>/dev/null || true
-          sed -i 's/id "org.jetbrains.kotlin.android" version ".*"/id "org.jetbrains.kotlin.android" version "2.0.21"/' android/settings.gradle 2>/dev/null || true
-          grep "kotlin" android/settings.gradle*
+          # minSdk 24 (required by flutter_tts)
+          sed -i 's/minSdk = .*/minSdk = 24/' android/app/build.gradle*
+          grep "minSdk" android/app/build.gradle*
+
+          # Kotlin version
+          sed -i 's/ext.kotlin_version = .*/ext.kotlin_version = "2.0.21"/' android/build.gradle* 2>/dev/null || true
+          sed -i 's/org.jetbrains.kotlin.android" version ".*"/org.jetbrains.kotlin.android" version "2.0.21"/' android/settings.gradle* 2>/dev/null || true
+          grep "kotlin" android/build.gradle* android/settings.gradle* 2>/dev/null
+
       - name: Get packages
         run: flutter pub get
+
       - name: Build APK
         run: flutter build apk
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
