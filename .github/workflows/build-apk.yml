@@ -18,10 +18,8 @@ jobs:
           architecture: x64
       - name: Create Android files
         run: flutter create --platforms=android .
-      - name: Fix Android config
-        run: |
-          sed -i 's/minSdk = .*/minSdk = 24/' android/app/build.gradle.kts
-          sed -i 's/id("org.jetbrains.kotlin.android") version ".*"/id("org.jetbrains.kotlin.android") version "2.2.20"/' android/settings.gradle.kts
+      - name: Add permissions
+        run: sed -i '/<application/i\    <uses-permission android:name="android.permission.RECORD_AUDIO"/>' android/app/src/main/AndroidManifest.xml
       - name: Get packages
         run: flutter pub get
       - name: Build APK

@@ -1,26 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../models/language.dart';
 import '../providers/app_provider.dart';
-import 'call_screen.dart';
+import 'translate_screen.dart';
 import 'settings_screen.dart';
 
-/// 首页 — 登录 + 拨号盘
-class HomeScreen extends StatefulWidget {
+/// 首页 — 语言选择 + 开始翻译
+class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
-
-  @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
-  final _phoneController = TextEditingController(text: '');
-  final _dialController = TextEditingController(text: '');
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('TalkTranslate'),
+        centerTitle: true,
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
@@ -30,210 +24,113 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: Consumer<AppProvider>(
         builder: (context, provider, _) {
-          if (!provider.connected) {
-            return _buildLogin(provider);
-          }
-          return _buildDialer(provider);
+          return Column(
+            children: [
+              const SizedBox(height: 32),
+              // 图标
+              const Icon(Icons.translate, size: 72, color: Colors.blue),
+              const SizedBox(height: 8),
+              const Text('通话实时翻译', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 4),
+              Text('打开扬声器 → App 自动翻译', style: TextStyle(fontSize: 14, color: Colors.grey[600])),
+              const SizedBox(height: 40),
+
+              // 语言选择
+              _LangSelector(
+                label: '我说',
+                selected: provider.myLanguage,
+                onSelected: (l) => provider.setMyLanguage(l),
+              ),
+              IconButton(
+                icon: const Icon(Icons.swap_vert, size: 28),
+                onPressed: () => provider.swapLanguages(),
+              ),
+              _LangSelector(
+                label: '对方说',
+                selected: provider.peerLanguage,
+                onSelected: (l) => provider.setPeerLanguage(l),
+              ),
+
+              const Spacer(),
+
+              // 开始按钮
+              Padding(
+                padding: const EdgeInsets.all(32),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton.icon(
+                    onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TranslateScreen())),
+                    icon: const Icon(Icons.mic, size: 24),
+                    label: const Text('开始翻译', style: TextStyle(fontSize: 18)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+                    ),
+                  ),
+                ),
+              ),
+              Text('无需对方安装 App', style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+              const SizedBox(height: 16),
+            ],
+          );
         },
       ),
     );
   }
+}
 
-  Widget _buildLogin(AppProvider provider) {
+class _LangSelector extends StatelessWidget {
+  final String label;
+  final Language selected;
+  final ValueChanged<Language> onSelected;
+
+  const _LangSelector({required this.label, required this.selected, required this.onSelected});
+
+  @override
+  Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(32),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.translate, size: 80, color: Colors.blue),
-          const SizedBox(height: 16),
-          const Text('TalkTranslate', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          Text('实时翻译通话', style: TextStyle(fontSize: 16, color: Colors.grey[600])),
-          const SizedBox(height: 40),
-          TextField(
-            controller: _phoneController,
-            decoration: InputDecoration(
-              labelText: '手机号',
-              hintText: '+86 138 0013 8000',
-              prefixIcon: const Icon(Icons.phone),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            keyboardType: TextInputType.phone,
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+      child: InkWell(
+        onTap: () => _showPicker(context),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey[300]!),
+            borderRadius: BorderRadius.circular(12),
           ),
-          const SizedBox(height: 20),
-          SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: ElevatedButton(
-              onPressed: () {
-                final phone = _phoneController.text.trim();
-                if (phone.isNotEmpty) provider.connect(phone);
-              },
-              child: const Text('登录', style: TextStyle(fontSize: 16)),
+          child: Row(children: [
+            Text(selected.flag, style: const TextStyle(fontSize: 24)),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(selected.nativeName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                  Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+                ],
+              ),
             ),
-          ),
-        ],
+            const Icon(Icons.arrow_drop_down),
+          ]),
+        ),
       ),
     );
   }
 
-  Widget _buildDialer(AppProvider provider) {
-    return Column(
-      children: [
-        // 语言选择
-        _buildLanguageBar(provider),
-        const Divider(),
-        // 拨号输入
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: TextField(
-            controller: _dialController,
-            decoration: InputDecoration(
-              labelText: '输入对方手机号',
-              prefixIcon: const Icon(Icons.phone),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            keyboardType: TextInputType.phone,
-          ),
-        ),
-        // 呼叫按钮
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: ElevatedButton.icon(
-              onPressed: () {
-                final to = _dialController.text.trim();
-                if (to.isNotEmpty) {
-                  provider.startCall(to);
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => const CallScreen()));
-                }
-              },
-              icon: const Icon(Icons.call),
-              label: const Text('呼叫', style: TextStyle(fontSize: 16)),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
-            ),
-          ),
-        ),
-        const SizedBox(height: 20),
-        // 在线用户
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Text('在线用户 (${provider.onlineUsers.length})', style: const TextStyle(fontSize: 14, color: Colors.grey)),
-              ),
-              Expanded(
-                child: provider.onlineUsers.isEmpty
-                    ? const Center(child: Text('暂无其他在线用户'))
-                    : ListView.builder(
-                        itemCount: provider.onlineUsers.length,
-                        itemBuilder: (_, i) {
-                          final user = provider.onlineUsers[i];
-                          final isMe = user == provider.phone;
-                          return ListTile(
-                            leading: CircleAvatar(child: Text(user.substring(user.length - 4))),
-                            title: Text(user),
-                            subtitle: Text(isMe ? '我' : '在线'),
-                            trailing: isMe
-                                ? null
-                                : IconButton(
-                                    icon: const Icon(Icons.call, color: Colors.green),
-                                    onPressed: () {
-                                      _dialController.text = user;
-                                    },
-                                  ),
-                          );
-                        },
-                      ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildLanguageBar(AppProvider provider) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        children: [
-          Expanded(
-            child: _LangChip(
-              flag: provider.myLanguage.flag,
-              name: provider.myLanguage.nativeName,
-              onTap: () => _pickLanguage(context, true, provider),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.swap_horiz),
-            onPressed: () => provider.swapLanguages(),
-          ),
-          Expanded(
-            child: _LangChip(
-              flag: provider.peerLanguage.flag,
-              name: provider.peerLanguage.nativeName,
-              onTap: () => _pickLanguage(context, false, provider),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _pickLanguage(BuildContext context, bool isMy, AppProvider provider) {
+  void _showPicker(BuildContext context) {
     showModalBottomSheet(
       context: context,
       builder: (_) => Column(
         mainAxisSize: MainAxisSize.min,
-        children: Language.supported.map((lang) {
-          return ListTile(
-            leading: Text(lang.flag, style: const TextStyle(fontSize: 24)),
-            title: Text(lang.nativeName),
-            subtitle: Text(lang.name),
-            onTap: () {
-              if (isMy) provider.setMyLanguage(lang);
-              else provider.setPeerLanguage(lang);
-              Navigator.pop(context);
-            },
-          );
-        }).toList(),
-      ),
-    );
-  }
-
-  @override
-  void dispose() {
-    _phoneController.dispose();
-    _dialController.dispose();
-    super.dispose();
-  }
-}
-
-class _LangChip extends StatelessWidget {
-  final String flag;
-  final String name;
-  final VoidCallback onTap;
-
-  const _LangChip({required this.flag, required this.name, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-        decoration: BoxDecoration(border: Border.all(color: Colors.grey[300]!), borderRadius: BorderRadius.circular(8)),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Text(flag, style: const TextStyle(fontSize: 18)),
-          const SizedBox(width: 4),
-          Text(name, style: const TextStyle(fontSize: 13)),
-        ]),
+        children: Language.supported.map((l) => ListTile(
+          leading: Text(l.flag, style: const TextStyle(fontSize: 28)),
+          title: Text(l.nativeName),
+          subtitle: Text(l.name),
+          trailing: l.code == selected.code ? const Icon(Icons.check) : null,
+          onTap: () { onSelected(l); Navigator.pop(context); },
+        )).toList(),
       ),
     );
   }

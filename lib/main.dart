@@ -21,10 +21,7 @@ class TalkTranslateApp extends StatelessWidget {
         theme: ThemeData(
           colorSchemeSeed: Colors.blue,
           useMaterial3: true,
-          appBarTheme: const AppBarTheme(
-            centerTitle: true,
-            elevation: 0,
-          ),
+          brightness: Brightness.light,
         ),
         home: const HomeScreen(),
       ),
