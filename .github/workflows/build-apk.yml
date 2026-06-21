@@ -23,7 +23,17 @@ jobs:
 
       - name: Set minSdkVersion to 24 (required by flutter_tts)
         run: |
-          echo '  defaultConfig { minSdkVersion 24 }' >> android/app/build.gradle
+          # Overwrite defaultConfig section to include minSdkVersion 24
+          python3 -c "
+import re
+content = open('android/app/build.gradle').read()
+# Replace flutter.minSdkVersion with 24
+content = content.replace('flutter.minSdkVersion', '24')
+# Make sure minSdk is 24
+content = re.sub(r'minSdk\s*=\s*f\d+', 'minSdk = 24', content)
+open('android/app/build.gradle','w').write(content)
+print('minSdk set to 24')
+"
 
       - name: Install dependencies
         run: flutter pub get
