@@ -31,15 +31,15 @@ jobs:
           sed -i 's/minSdk = .*/minSdk = 24/' android/app/build.gradle.kts
           echo "=== minSdk ===" && grep "minSdk" android/app/build.gradle.kts
 
-          # Kotlin version - file is settings.gradle (Groovy)
+          # Kotlin version - file is settings.gradle.kts (Kotlin DSL)
+          echo "=== settings files ==="
+          find android -name "settings*" -type f
           echo "=== Kotlin before ==="
-          cat android/settings.gradle | grep kotlin || echo "no kotlin in settings.gradle"
-          cat android/settings.gradle.kts | grep kotlin 2>/dev/null || echo "no settings.gradle.kts either"
-          find android -name "settings*" -exec grep -l kotlin {} \;
-          # Try both formats
-          sed -i 's/"org.jetbrains.kotlin.android" version ".*"/"org.jetbrains.kotlin.android" version "2.0.21"/' android/settings.gradle 2>/dev/null || true
+          cat android/settings.gradle.kts 2>/dev/null || echo "no .kts file"
+          # Update Kotlin version (Kotlin DSL syntax)
+          sed -i 's/id("org.jetbrains.kotlin.android") version ".*"/id("org.jetbrains.kotlin.android") version "2.0.21"/' android/settings.gradle.kts 2>/dev/null || true
           echo "=== Kotlin after ==="
-          grep "kotlin" android/settings.gradle 2>/dev/null || echo "not in settings.gradle"
+          grep kotlin android/settings.gradle.kts 2>/dev/null || echo "not found"
 
       - name: Get packages
         run: flutter pub get
