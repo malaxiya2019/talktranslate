@@ -56,10 +56,23 @@ class TranslationService {
 
   String _langName(String code) {
     final map = {
-      'zh-CN': 'Chinese', 'en-US': 'English', 'ja-JP': 'Japanese',
-      'ko-KR': 'Korean', 'es-ES': 'Spanish', 'fr-FR': 'French',
-      'de-DE': 'German', 'pt-BR': 'Portuguese', 'ar-SA': 'Arabic',
-      'th-TH': 'Thai', 'vi-VN': 'Vietnamese', 'ru-RU': 'Russian',
+      'zh-CN': 'Chinese', 'zh-TW': 'Traditional Chinese',
+      'ja-JP': 'Japanese', 'ko-KR': 'Korean',
+      'en-US': 'English', 'en-GB': 'English', 'en-AU': 'English', 'en-CA': 'English', 'en-IN': 'English',
+      'es-ES': 'Spanish', 'es-MX': 'Spanish',
+      'fr-FR': 'French', 'fr-CA': 'French',
+      'de-DE': 'German', 'pt-BR': 'Portuguese', 'pt-PT': 'Portuguese',
+      'it-IT': 'Italian', 'ru-RU': 'Russian', 'nl-NL': 'Dutch',
+      'sv-SE': 'Swedish', 'nb-NO': 'Norwegian', 'da-DK': 'Danish',
+      'fi-FI': 'Finnish', 'pl-PL': 'Polish', 'cs-CZ': 'Czech',
+      'sk-SK': 'Slovak', 'hu-HU': 'Hungarian', 'ro-RO': 'Romanian',
+      'el-GR': 'Greek', 'uk-UA': 'Ukrainian',
+      'ar-SA': 'Arabic', 'he-IL': 'Hebrew', 'tr-TR': 'Turkish',
+      'hi-IN': 'Hindi', 'th-TH': 'Thai', 'vi-VN': 'Vietnamese',
+      'id-ID': 'Indonesian', 'ms-MY': 'Malay',
+      'ca-ES': 'Catalan', 'hr-HR': 'Croatian', 'sr-RS': 'Serbian',
+      'bg-BG': 'Bulgarian', 'lt-LT': 'Lithuanian', 'lv-LV': 'Latvian',
+      'et-EE': 'Estonian', 'sl-SI': 'Slovenian',
     };
     return map[code] ?? 'English';
   }

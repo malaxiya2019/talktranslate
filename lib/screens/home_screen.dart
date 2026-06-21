@@ -122,15 +122,43 @@ class _LangSelector extends StatelessWidget {
   void _showPicker(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      builder: (_) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: Language.supported.map((l) => ListTile(
-          leading: Text(l.flag, style: const TextStyle(fontSize: 28)),
-          title: Text(l.nativeName),
-          subtitle: Text(l.name),
-          trailing: l.code == selected.code ? const Icon(Icons.check) : null,
-          onTap: () { onSelected(l); Navigator.pop(context); },
-        )).toList(),
+      isScrollControlled: true,
+      builder: (_) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        maxChildSize: 0.9,
+        minChildSize: 0.4,
+        expand: false,
+        builder: (_, scrollController) => Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2))),
+            ),
+            const Padding(padding: EdgeInsets.only(bottom: 8), child: Text('选择语言', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold))),
+            const Divider(height: 1),
+            Expanded(
+              child: ListView(
+                controller: scrollController,
+                children: [
+                  for (final entry in Language.grouped.entries) ...[
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                      child: Text(entry.key, style: TextStyle(fontSize: 13, color: Colors.grey[500], fontWeight: FontWeight.w600)),
+                    ),
+                    ...entry.value.map((l) => ListTile(
+                      dense: true,
+                      leading: Text(l.flag, style: const TextStyle(fontSize: 24)),
+                      title: Text(l.nativeName, style: const TextStyle(fontSize: 15)),
+                      subtitle: Text(l.name, style: const TextStyle(fontSize: 12)),
+                      trailing: l.code == selected.code ? const Icon(Icons.check, size: 20) : null,
+                      onTap: () { onSelected(l); Navigator.pop(context); },
+                    )),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
