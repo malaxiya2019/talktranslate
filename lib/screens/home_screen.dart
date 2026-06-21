@@ -108,7 +108,7 @@ class HomeScreen extends StatelessWidget {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => const CallScreen(),
+        builder: (_) => const TranslateScreen(),
       ),
     );
   }

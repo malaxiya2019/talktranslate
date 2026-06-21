@@ -10,10 +10,6 @@ dependencies:
   flutter:
     sdk: flutter
   
-  # 通话
-  flutter_webrtc: ^0.11.0
-  signalr_core: ^1.4.0
-  
   # 语音识别 (STT)
   speech_to_text: ^6.6.0
   
@@ -23,20 +19,14 @@ dependencies:
   # 翻译 API
   http: ^1.2.0
   
-  # UI
+  # UI 状态管理
   provider: ^6.1.0
-  lottie: ^3.1.0
-  cached_network_image: ^3.3.0
   
   # 本地存储
   shared_preferences: ^2.2.0
   
-  # 权限
+  # 权限申请
   permission_handler: ^11.3.0
-  
-  # 工具
-  uuid: ^4.3.0
-  intl: ^0.19.0
 
 dev_dependencies:
   flutter_test:
@@ -45,7 +35,3 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-  assets:
-    - assets/images/
-    - assets/animations/
-    - assets/flags/
