@@ -19,7 +19,12 @@ jobs:
       - name: Create Android platform files
         run: flutter create --platforms=android .
       - name: Fix minSdk
-        run: find . -path "*/app/build.gradle" -exec grep -l "minSdk" {} \; -exec sed -i 's/minSdk = .*/minSdk = 24/' {} \;
+        run: |
+          echo "=== Looking for build files ==="
+          find . -name "build.gradle*" -o -name "build.gradle.kts" | head -10
+          echo "=== Fixing ==="
+          find . -name "build.gradle*" -exec grep -l "minSdk" {} \; -exec sed -i 's/minSdk = .*/minSdk = 24/' {} \; 2>/dev/null || true
+          find . -name "build.gradle*" -exec grep -l "minSdk" {} \; -exec echo "Fixed: {}" \;
       - name: Get packages
         run: flutter pub get
       - name: Build APK
