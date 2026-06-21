@@ -20,10 +20,14 @@ jobs:
         run: flutter create --platforms=android .
       - name: Fix minSdk
         run: |
-          cat android/app/build.gradle
-          sed -i 's/minSdk .*/minSdk 24/' android/app/build.gradle
-          echo '--- after fix ---'
-          grep minSdk android/app/build.gradle
+          echo "=== Looking for build.gradle ==="
+          find . -name "build.gradle" -type f
+          echo "=== File content ==="
+          cat android/app/build.gradle 2>/dev/null || echo "not found at android/app/build.gradle"
+          echo "=== Trying to fix ==="
+          find . -name "build.gradle" -path "*/app/*" -exec sed -i 's/minSdk = .*/minSdk = 24/' {} \;
+          echo "=== After fix ==="
+          grep -r "minSdk" android/app/ 2>/dev/null || echo "minSdk not found"
       - name: Get packages
         run: flutter pub get
       - name: Build APK
