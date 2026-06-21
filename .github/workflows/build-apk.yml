@@ -51,4 +51,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: talktranslate-apk
-          path: build/app/outputs/flutter-apk/app.apk
+          path: build/app/outputs/flutter-apk/*.apk
