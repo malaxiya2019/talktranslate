@@ -10,39 +10,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.29.2'
           channel: 'stable'
           architecture: x64
-
-      - name: Generate Android platform files
+      - name: Create Android files
         run: flutter create --platforms=android .
-
-      - name: Set minSdkVersion to 24 (required by flutter_tts)
-        run: |
-          # Overwrite defaultConfig section to include minSdkVersion 24
-          python3 -c "
-import re
-content = open('android/app/build.gradle').read()
-# Replace flutter.minSdkVersion with 24
-content = content.replace('flutter.minSdkVersion', '24')
-# Make sure minSdk is 24
-content = re.sub(r'minSdk\s*=\s*f\d+', 'minSdk = 24', content)
-open('android/app/build.gradle','w').write(content)
-print('minSdk set to 24')
-"
-
-      - name: Install dependencies
+      - name: Fix minSdk
+        run: sed -i 's/flutter.minSdkVersion/24/g' android/app/build.gradle
+      - name: Get packages
         run: flutter pub get
-
-      - name: Build APK (release)
+      - name: Build APK
         run: flutter build apk --release
-
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: talktranslate-apk
-          path: build/app/outputs/flutter-apk/*.apk
+          path: build/app/outputs/flutter-apk/app-release.apk
