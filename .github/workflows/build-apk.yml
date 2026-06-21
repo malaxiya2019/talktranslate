@@ -18,14 +18,8 @@ jobs:
           architecture: x64
       - name: Create Android platform files
         run: flutter create --platforms=android .
-      - name: Override build.gradle with minSdk 24
-        run: |
-          python3 << 'PYEOF'
-content = open('android/app/build.gradle').read()
-content = content.replace('flutter.minSdkVersion', '24')
-open('android/app/build.gradle', 'w').write(content)
-print('minSdk set to 24')
-PYEOF
+      - name: Fix minSdk
+        run: find . -path "*/app/build.gradle" -exec grep -l "minSdk" {} \; -exec sed -i 's/minSdk = .*/minSdk = 24/' {} \;
       - name: Get packages
         run: flutter pub get
       - name: Build APK
