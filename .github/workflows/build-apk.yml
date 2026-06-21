@@ -23,9 +23,10 @@ jobs:
           # Fix minSdk
           sed -i 's/minSdk = .*/minSdk = 24/' android/app/build.gradle.kts
           grep "minSdk" android/app/build.gradle.kts
-          # Fix Kotlin version
-          sed -i 's/id "org.jetbrains.kotlin.android" version ".*"/id "org.jetbrains.kotlin.android" version "2.0.21"/' android/settings.gradle.kts
-          grep "kotlin" android/settings.gradle.kts
+          # Fix Kotlin version (try both .kts and .gradle)
+          sed -i 's/id "org.jetbrains.kotlin.android" version ".*"/id "org.jetbrains.kotlin.android" version "2.0.21"/' android/settings.gradle.kts 2>/dev/null || true
+          sed -i 's/id "org.jetbrains.kotlin.android" version ".*"/id "org.jetbrains.kotlin.android" version "2.0.21"/' android/settings.gradle 2>/dev/null || true
+          grep "kotlin" android/settings.gradle*
       - name: Get packages
         run: flutter pub get
       - name: Build APK
