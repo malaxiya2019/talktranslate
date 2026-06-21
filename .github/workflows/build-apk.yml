@@ -23,8 +23,7 @@ jobs:
 
       - name: Set minSdkVersion to 24 (required by flutter_tts)
         run: |
-          sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 24/' android/app/build.gradle
-          sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 24/' android/app/build.gradle
+          sed -i 's/flutter.minSdkVersion/24/g' android/app/build.gradle
 
       - name: Install dependencies
         run: flutter pub get
