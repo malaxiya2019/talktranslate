@@ -108,7 +108,7 @@ class _TranslateScreenState extends State<TranslateScreen> with WidgetsBindingOb
           Row(children: [
             Icon(isMe ? Icons.person : Icons.person_outline, color: accentColor, size: 16),
             const SizedBox(width: 6),
-            Text('$speakerFlag $speakerLabel', style: TextStyle(color: accentColor.shade200, fontSize: 13)),
+            Text('$speakerFlag $speakerLabel', style: TextStyle(color: accentColor.withOpacity(0.8), fontSize: 13)),
           ]),
           const SizedBox(height: 8),
           Text(provider.originalText.isEmpty ? '等待语音...' : provider.originalText,
