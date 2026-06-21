@@ -11,7 +11,7 @@ dependencies:
     sdk: flutter
   
   # 语音识别 (STT)
-  speech_to_text: ^6.6.0
+  speech_to_text: ^7.0.0
   
   # 语音合成 (TTS)
   flutter_tts: ^4.0.0
