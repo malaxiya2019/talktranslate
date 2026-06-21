@@ -20,11 +20,12 @@ jobs:
         run: flutter create --platforms=android .
       - name: Fix minSdk
         run: |
-          mkdir -p android
-          echo "org.gradle.jvmargs=-Xmx4G" >> android/gradle.properties
-          echo "flutter.minSdkVersion=24" >> android/gradle.properties
-          echo "flutter.targetSdkVersion=34" >> android/gradle.properties
-          echo "flutter.compileSdkVersion=34" >> android/gradle.properties
+          echo "minSdk before:"
+          grep -r "minSdk" android/app/ 2>/dev/null || echo "not found"
+          sed -i 's/minSdk = .*/minSdk = 24/' android/app/build.gradle.kts 2>/dev/null || true
+          sed -i 's/minSdk = .*/minSdk = 24/' android/app/build.gradle 2>/dev/null || true
+          echo "minSdk after:"
+          grep -r "minSdk" android/app/ 2>/dev/null || echo "still not found"
       - name: Get packages
         run: flutter pub get
       - name: Build APK
