@@ -4,6 +4,7 @@ import 'package:speech_to_text/speech_to_text.dart' as stt;
 import '../models/call.dart';
 import 'signaling_service.dart';
 import 'translation_service.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 
 class CallService {
   final SignalingService _signal;
@@ -17,6 +18,8 @@ class CallService {
   String? _peerPhone;
   CallStatus _status = CallStatus.idle;
   final TranslationService translator = TranslationService();
+  final FlutterTts tts = FlutterTts();
+  bool _ttsEnabled = true;
   String _subtitle = '';        // 对方说的话 (原文)
   String _subtitleTranslated = '';  // 对方说的话 (翻译)
   String _mySpeech = '';        // 我刚说的话
@@ -39,6 +42,32 @@ class CallService {
 
   CallService(this._signal) {
     _signal.events.listen(_onSignal);
+    _initTTS();
+  }
+
+  Future<void> _initTTS() async {
+    try {
+      await tts.setLanguage('en-US');
+      await tts.setSpeechRate(0.5);
+      await tts.setVolume(1.0);
+    } catch (_) {}
+  }
+
+  Future<void> speak(String text, String lang) async {
+    if (!_ttsEnabled || text.isEmpty) return;
+    try {
+      await tts.setLanguage(_mapTTSLang(lang));
+      await tts.speak(text);
+    } catch (_) {}
+  }
+
+  String _mapTTSLang(String code) {
+    const map = {
+      'zh-CN': 'zh-CN', 'en-US': 'en-US', 'ja-JP': 'ja-JP',
+      'ko-KR': 'ko-KR', 'es-ES': 'es-ES', 'fr-FR': 'fr-FR',
+      'de-DE': 'de-DE', 'pt-BR': 'pt-BR', 'ru-RU': 'ru-RU',
+    };
+    return map[code] ?? 'en-US';
   }
 
   Future<MediaStream> getLocalStream() async {
@@ -141,6 +170,10 @@ class CallService {
         _subtitle = msg['text'] as String;
         _subtitleTranslated = (msg['translated'] as String?) ?? '';
         _events.add({'type': 'subtitle', 'text': _subtitle, 'translated': _subtitleTranslated});
+        // TTS: 自动朗读翻译结果
+        if (_subtitleTranslated.isNotEmpty) {
+          speak(_subtitleTranslated, 'zh-CN');
+        }
         break;
       case 'hangup':
         _cleanup();
