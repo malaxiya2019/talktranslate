@@ -98,12 +98,12 @@ class CallService {
   Future<void> _onSignal(Map<String, dynamic> msg) async {
     switch (msg['type']) {
       case 'ringing':
-        _callId = msg['callId'];
+        _callId = msg['callId'] as String?;
         _status = CallStatus.ringing;
         _events.add({'type': 'status', 'status': _status});
         break;
       case 'accepted':
-        _callId = msg['callId'];
+        _callId = msg['callId'] as String;
         _status = CallStatus.connected;
         _events.add({'type': 'status', 'status': _status});
         final offer = await _pc!.createOffer();
