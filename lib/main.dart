@@ -10,7 +10,6 @@ void main() {
 
 class TalkTranslateApp extends StatelessWidget {
   const TalkTranslateApp({super.key});
-
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
@@ -18,11 +17,7 @@ class TalkTranslateApp extends StatelessWidget {
       child: MaterialApp(
         title: 'TalkTranslate',
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          colorSchemeSeed: Colors.blue,
-          useMaterial3: true,
-          brightness: Brightness.light,
-        ),
+        theme: ThemeData(colorSchemeSeed: Colors.blue, useMaterial3: true),
         home: const HomeScreen(),
       ),
     );

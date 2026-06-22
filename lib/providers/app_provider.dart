@@ -1,99 +1,58 @@
-import 'dart:async';
 import 'package:flutter/foundation.dart';
-import '../models/language.dart';
-import '../services/translation_service.dart';
-import '../services/translation_engine.dart';
+import '../services/signaling_service.dart';
+import '../services/call_service.dart';
+import '../models/call.dart';
 
-/// App 全局状态
 class AppProvider extends ChangeNotifier {
-  final TranslationService translationService = TranslationService();
-  late final TranslationEngine engine;
+  final signaling = SignalingService();
+  late final CallService callService;
 
-  Language _myLanguage = Language.supported[0];
-  Language _peerLanguage = Language.supported[1];
-  Language get myLanguage => _myLanguage;
-  Language get peerLanguage => _peerLanguage;
-
-  bool _isListening = false;
-  bool get isListening => _isListening;
-
-  String _originalText = '';
-  String _translatedText = '';
-  String get originalText => _originalText;
-  String get translatedText => _translatedText;
-
-  String? _apiKey;
-  String? get apiKey => _apiKey;
-
-  Speaker? _currentSpeaker;
-  Speaker? get currentSpeaker => _currentSpeaker;
-  List<ConversationEntry> get conversation => engine.conversation;
-
-  StreamSubscription? _sub;
+  String? _phone;
+  String? get phone => _phone;
+  bool _connected = false;
+  bool get connected => _connected;
+  List<String> _onlineUsers = [];
+  List<String> get onlineUsers => _onlineUsers;
+  String _serverUrl = 'ws://localhost:3459';
+  String get serverUrl => _serverUrl;
+  String? _toast;
+  String? get toast => _toast;
 
   AppProvider() {
-    engine = TranslationEngine(translation: translationService);
-    _sub = engine.results.listen((result) {
-      switch (result.type) {
-        case 'recognized':
-          _originalText = result.original;
-          _currentSpeaker = result.speaker;
-          break;
-        case 'translated':
-          _translatedText = result.translated;
-          _currentSpeaker = result.speaker;
-          break;
-        case 'error':
-          _translatedText = '⚠ ${result.error}';
-          break;
+    callService = CallService(signaling);
+
+    signaling.events.listen((e) {
+      switch (e['type']) {
+        case 'registered': _connected = true; _phone = e['phone']; notifyListeners(); break;
+        case 'disconnected': _connected = false; notifyListeners(); break;
+        case 'online': _onlineUsers = List<String>.from(e['users']); notifyListeners(); break;
+        case 'incoming': callService.incoming(e['callId'], e['from']); notifyListeners(); break;
+        case 'error': _toast = e['message']; notifyListeners(); break;
       }
-      notifyListeners();
+    });
+
+    callService.events.listen((e) {
+      if (e['type'] == 'toast') { _toast = e['message']; notifyListeners(); }
+      if (e['type'] == 'status') notifyListeners();
     });
   }
 
-  void setMyLanguage(Language lang) {
-    _myLanguage = lang;
-    engine.setLanguages(myLang: lang.code, peerLang: _peerLanguage.code);
-    notifyListeners();
+  void setServer(String url) { _serverUrl = url; notifyListeners(); }
+
+  Future<void> login(String phone) async {
+    _phone = phone;
+    await signaling.connect(_serverUrl, phone);
   }
 
-  void setPeerLanguage(Language lang) {
-    _peerLanguage = lang;
-    engine.setLanguages(myLang: _myLanguage.code, peerLang: lang.code);
-    notifyListeners();
-  }
+  void logout() { signaling.disconnect(); _connected = false; _phone = null; notifyListeners(); }
 
-  void swapLanguages() {
-    final t = _myLanguage; _myLanguage = _peerLanguage; _peerLanguage = t;
-    engine.setLanguages(myLang: _myLanguage.code, peerLang: _peerLanguage.code);
-    notifyListeners();
-  }
+  CallStatus get callStatus => callService.status;
+  String? get peerPhone => callService.peerPhone;
 
-  void setApiKey(String key) {
-    _apiKey = key;
-    translationService.setApiKey(key);
-    notifyListeners();
-  }
+  Future<void> call(String to) async => await callService.call(to);
+  Future<void> accept() async => await callService.accept();
+  Future<void> reject() async => await callService.reject();
+  Future<void> hangup() async => await callService.hangup();
 
-  Future<void> startTranslation() async {
-    engine.setLanguages(myLang: _myLanguage.code, peerLang: _peerLanguage.code);
-    await engine.start();
-    _isListening = true;
-    notifyListeners();
-  }
-
-  Future<void> stopTranslation() async {
-    await engine.stop();
-    _isListening = false;
-    _originalText = '';
-    _translatedText = '';
-    notifyListeners();
-  }
-
-  @override
-  void dispose() {
-    _sub?.cancel();
-    engine.dispose();
-    super.dispose();
-  }
+  void clearToast() { _toast = null; notifyListeners(); }
 }

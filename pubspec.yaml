@@ -1,7 +1,7 @@
 name: talktranslate
-description: "通话实时翻译 — 扬声器模式下显示翻译字幕"
+description: "TalkTranslate v2 — VoIP 实时翻译通话"
 publish_to: 'none'
-version: 1.5.0+1
+version: 2.0.0+1
 
 environment:
   sdk: '>=3.2.0 <4.0.0'
@@ -9,23 +9,15 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  
-  # 语音识别
-  speech_to_text: ^7.0.0
-  
-  # 翻译 API
-  http: ^1.2.0
-  
-  # UI 状态
+  flutter_webrtc: ^0.11.0
+  web_socket_channel: ^3.0.0
   provider: ^6.1.0
-  
-  # 本地存储
   shared_preferences: ^2.2.0
+  uuid: ^4.3.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^4.0.0
 
 flutter:
   uses-material-design: true
