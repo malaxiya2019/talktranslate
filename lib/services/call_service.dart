@@ -73,7 +73,7 @@ class CallService {
     _pc = await createPC();
     final offer = await _pc!.createOffer();
     await _pc!.setLocalDescription(offer);
-    _signal.sendOffer(_callId, offer.sdp);
+    _signal.sendOffer(_callId, offer.sdp ?? '');
   }
 
   Future<void> reject() async {
@@ -108,7 +108,7 @@ class CallService {
         _events.add({'type': 'status', 'status': _status});
         final offer = await _pc!.createOffer();
         await _pc!.setLocalDescription(offer);
-        _signal.sendOffer(_callId, offer.sdp);
+        _signal.sendOffer(_callId, offer.sdp ?? '');
         break;
       case 'rejected':
         _cleanup();
@@ -118,7 +118,7 @@ class CallService {
         await _pc?.setRemoteDescription(RTCSessionDescription(msg['sdp'] as String, 'offer'));
         final answer = await _pc!.createAnswer();
         await _pc!.setLocalDescription(answer);
-        _signal.sendAnswer(_callId, answer.sdp);
+        _signal.sendAnswer(_callId, answer.sdp ?? '');
         break;
       case 'answer':
         await _pc?.setRemoteDescription(RTCSessionDescription(msg['sdp'] as String, 'answer'));
