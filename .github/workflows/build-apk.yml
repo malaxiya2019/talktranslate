@@ -18,6 +18,8 @@ jobs:
           architecture: x64
       - name: Create Android files
         run: flutter create --platforms=android .
+      - name: Fix minSdk
+        run: sed -i 's/minSdk = .*/minSdk = 24/' android/app/build.gradle.kts
       - name: Get packages
         run: flutter pub get
       - name: Build APK
