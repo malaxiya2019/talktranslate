@@ -11,7 +11,7 @@ class CallService {
   RTCPeerConnection? _pc;
   MediaStream? _localStream;
   MediaStream? _remoteStream;
-  String? _callId;
+  String _callId = '';
   String? _peerPhone;
   CallStatus _status = CallStatus.idle;
   CallStatus get status => _status;
@@ -38,7 +38,7 @@ class CallService {
     (await getLocalStream()).getTracks().forEach((t) => _pc?.addTrack(t, _localStream!));
 
     _pc!.onIceCandidate = (c) {
-      if (c != null && _callId != null) _signal.sendIce(_callId!, c.toMap(), _peerPhone ?? '');
+      if (c != null && _callId.isNotEmpty) _signal.sendIce(_callId, c.toMap(), _peerPhone ?? '');
     };
     _pc!.onTrack = (e) {
       _remoteStream = e.streams[0];
@@ -73,16 +73,16 @@ class CallService {
     _pc = await createPC();
     final offer = await _pc!.createOffer();
     await _pc!.setLocalDescription(offer);
-    _signal.sendOffer(_callId!, offer.sdp);
+    _signal.sendOffer(_callId, offer.sdp);
   }
 
   Future<void> reject() async {
-    _signal.reject(_callId!);
+    _signal.reject(_callId);
     _cleanup();
   }
 
   Future<void> hangup() async {
-    if (_callId != null) _signal.hangup(_callId!);
+    if (_callId.isNotEmpty) _signal.hangup(_callId);
     _cleanup();
   }
 
@@ -92,13 +92,13 @@ class CallService {
     _remoteStream = null;
     _status = CallStatus.idle;
     _events.add({'type': 'status', 'status': _status});
-    _callId = null; _peerPhone = null;
+    _callId = ''; _peerPhone = null;
   }
 
   Future<void> _onSignal(Map<String, dynamic> msg) async {
     switch (msg['type']) {
       case 'ringing':
-        _callId = msg['callId'] as String?;
+        _callId = msg['callId'] as String;
         _status = CallStatus.ringing;
         _events.add({'type': 'status', 'status': _status});
         break;
@@ -108,7 +108,7 @@ class CallService {
         _events.add({'type': 'status', 'status': _status});
         final offer = await _pc!.createOffer();
         await _pc!.setLocalDescription(offer);
-        _signal.sendOffer(_callId!, offer.sdp);
+        _signal.sendOffer(_callId, offer.sdp);
         break;
       case 'rejected':
         _cleanup();
@@ -118,7 +118,7 @@ class CallService {
         await _pc?.setRemoteDescription(RTCSessionDescription(msg['sdp'] as String, 'offer'));
         final answer = await _pc!.createAnswer();
         await _pc!.setLocalDescription(answer);
-        _signal.sendAnswer(_callId!, answer.sdp);
+        _signal.sendAnswer(_callId, answer.sdp);
         break;
       case 'answer':
         await _pc?.setRemoteDescription(RTCSessionDescription(msg['sdp'] as String, 'answer'));
