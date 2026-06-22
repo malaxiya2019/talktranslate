@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 import '../models/call.dart';
 import 'signaling_service.dart';
 
@@ -14,6 +15,13 @@ class CallService {
   String _callId = '';
   String? _peerPhone;
   CallStatus _status = CallStatus.idle;
+  String _subtitle = '';        // 对方说的话 (字幕)
+  String _mySpeech = '';        // 我刚说的话
+  String get subtitle => _subtitle;
+  String get mySpeech => _mySpeech;
+
+  stt.SpeechToText? _speech;
+  bool _sttRunning = false;
   CallStatus get status => _status;
   MediaStream? get remoteStream => _remoteStream;
   String? get peerPhone => _peerPhone;
@@ -86,15 +94,6 @@ class CallService {
     _cleanup();
   }
 
-  void _cleanup() {
-    _pc?.close(); _pc = null;
-    _localStream?.getTracks().forEach((t) => t.stop()); _localStream = null;
-    _remoteStream = null;
-    _status = CallStatus.idle;
-    _events.add({'type': 'status', 'status': _status});
-    _callId = ''; _peerPhone = null;
-  }
-
   Future<void> _onSignal(Map<String, dynamic> msg) async {
     switch (msg['type']) {
       case 'ringing':
@@ -132,10 +131,76 @@ class CallService {
             (c['sdpMLineIndex'] as int?) ?? 0));
         }
         break;
+      case 'subtitle':
+        _subtitle = msg['text'] as String;
+        _events.add({'type': 'subtitle', 'text': _subtitle});
+        break;
       case 'hangup':
         _cleanup();
         _events.add({'type': 'toast', 'message': '对方已挂断'});
         break;
     }
+  }
+
+  /// 开始语音识别 (STT)
+  Future<void> startSTT() async {
+    if (_sttRunning) return;
+    _speech ??= stt.SpeechToText();
+    final ok = await _speech!.initialize();
+    if (!ok) return;
+    _sttRunning = true;
+    _listenSTT();
+  }
+
+  void _listenSTT() async {
+    while (_sttRunning && _status == CallStatus.connected) {
+      final completer = Completer<void>();
+      String text = '';
+
+      await _speech!.listen(
+        onResult: (r) {
+          text = r.recognizedWords;
+          if (r.finalResult && !completer.isCompleted) completer.complete();
+        },
+        localeId: 'zh-CN',
+        cancelOnError: true,
+        partialResults: true,
+      );
+
+      await Future.any([
+        completer.future,
+        Future.delayed(const Duration(seconds: 5)),
+      ]);
+
+      await _speech!.stop();
+
+      if (text.isNotEmpty) {
+        _mySpeech = text;
+        _events.add({'type': 'mySpeech', 'text': text});
+        if (_callId.isNotEmpty && _peerPhone != null) {
+          _signal.sendSubtitle(_callId, text, _peerPhone!);
+        }
+      }
+      await Future.delayed(const Duration(milliseconds: 300));
+    }
+    _sttRunning = false;
+  }
+
+  /// 停止 STT
+  Future<void> stopSTT() async {
+    _sttRunning = false;
+    await _speech?.stop();
+  }
+
+  @override
+  void _cleanup() {
+    stopSTT();
+    _pc?.close(); _pc = null;
+    _localStream?.getTracks().forEach((t) => t.stop()); _localStream = null;
+    _remoteStream = null;
+    _status = CallStatus.idle;
+    _subtitle = ''; _mySpeech = '';
+    _events.add({'type': 'status', 'status': _status});
+    _callId = ''; _peerPhone = null;
   }
 }

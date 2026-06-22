@@ -127,6 +127,16 @@ wss.on("connection", (ws) => {
         break;
       }
 
+      // ── 字幕文本 ──
+      case "subtitle": {
+        const call = calls.get(msg.callId);
+        if (!call) return;
+        const target = msg.to === call.from ? call.to : call.from;
+        const targetWs = users.get(target)?.ws;
+        if (targetWs) send(targetWs, { type: "subtitle", callId: msg.callId, text: msg.text, from: msg.to });
+        break;
+      }
+
       // ── 挂断 ──
       case "hangup": {
         const call = calls.get(msg.callId);

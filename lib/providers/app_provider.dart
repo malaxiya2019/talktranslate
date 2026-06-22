@@ -33,7 +33,7 @@ class AppProvider extends ChangeNotifier {
 
     callService.events.listen((e) {
       if (e['type'] == 'toast') { _toast = e['message']; notifyListeners(); }
-      if (e['type'] == 'status') notifyListeners();
+      if (e['type'] == 'status' || e['type'] == 'subtitle' || e['type'] == 'mySpeech') notifyListeners();
     });
   }
 
@@ -49,8 +49,11 @@ class AppProvider extends ChangeNotifier {
   CallStatus get callStatus => callService.status;
   String? get peerPhone => callService.peerPhone;
 
+  String get subtitle => callService.subtitle;
+  String get mySpeech => callService.mySpeech;
+
   Future<void> call(String to) async => await callService.call(to);
-  Future<void> accept() async => await callService.accept();
+  Future<void> accept() async { await callService.accept(); callService.startSTT(); }
   Future<void> reject() async => await callService.reject();
   Future<void> hangup() async => await callService.hangup();
 
