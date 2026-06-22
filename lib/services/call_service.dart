@@ -115,18 +115,21 @@ class CallService {
         _events.add({'type': 'toast', 'message': '对方已拒接'});
         break;
       case 'offer':
-        await _pc?.setRemoteDescription(RTCSessionDescription(msg['sdp'], 'offer'));
+        await _pc?.setRemoteDescription(RTCSessionDescription(msg['sdp'] as String, 'offer'));
         final answer = await _pc!.createAnswer();
         await _pc!.setLocalDescription(answer);
         _signal.sendAnswer(_callId!, answer.sdp);
         break;
       case 'answer':
-        await _pc?.setRemoteDescription(RTCSessionDescription(msg['sdp'], 'answer'));
+        await _pc?.setRemoteDescription(RTCSessionDescription(msg['sdp'] as String, 'answer'));
         break;
       case 'ice':
         if (_pc != null && msg['candidate'] != null) {
+          final c = msg['candidate'] as Map;
           await _pc!.addCandidate(RTCIceCandidate(
-            msg['candidate']['candidate'], msg['candidate']['sdpMid'], msg['candidate']['sdpMLineIndex']));
+            (c['candidate'] as String?) ?? '',
+            (c['sdpMid'] as String?) ?? '',
+            (c['sdpMLineIndex'] as int?) ?? 0));
         }
         break;
       case 'hangup':
