@@ -50,10 +50,15 @@ class CallScreen extends StatelessWidget {
                       const SizedBox(height: 6),
                       Text(p.subtitle.isEmpty ? '等待对方说话...' : p.subtitle,
                           style: TextStyle(fontSize: 22, color: Colors.white, fontWeight: FontWeight.w500, height: 1.3)),
+                      if (p.subtitleTranslated.isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        Text(p.subtitleTranslated,
+                            style: TextStyle(fontSize: 20, color: Colors.greenAccent[100], fontWeight: FontWeight.bold, height: 1.3)),
+                      ],
                     ]),
                   ),
 
-                  // 我说的 (本地识别反馈)
+                  // 我说的 (本地识别反馈 + 翻译)
                   Container(
                     margin: const EdgeInsets.fromLTRB(16, 4, 16, 8),
                     padding: const EdgeInsets.all(16),
@@ -67,6 +72,12 @@ class CallScreen extends StatelessWidget {
                       const SizedBox(height: 6),
                       Text(p.mySpeech.isEmpty ? '请说话...' : p.mySpeech,
                           style: TextStyle(fontSize: 18, color: Colors.white70, height: 1.3)),
+                      if (p.mySpeechTranslated.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(p.mySpeechTranslated,
+                              style: TextStyle(fontSize: 16, color: Colors.greenAccent[100], height: 1.3)),
+                        ),
                     ]),
                   ),
                 ] else ...[

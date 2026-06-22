@@ -133,7 +133,11 @@ wss.on("connection", (ws) => {
         if (!call) return;
         const target = msg.to === call.from ? call.to : call.from;
         const targetWs = users.get(target)?.ws;
-        if (targetWs) send(targetWs, { type: "subtitle", callId: msg.callId, text: msg.text, from: msg.to });
+        if (targetWs) send(targetWs, {
+          type: "subtitle", callId: msg.callId,
+          text: msg.text, translated: msg.translated || "",
+          from: msg.to,
+        });
         break;
       }
 

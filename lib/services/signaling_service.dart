@@ -36,8 +36,8 @@ class SignalingService {
   void sendAnswer(String callId, String sdp) => send({'type': 'answer', 'callId': callId, 'sdp': sdp});
   void sendIce(String callId, Map<String, dynamic> candidate, String to) =>
       send({'type': 'ice', 'callId': callId, 'candidate': candidate, 'to': to});
-  void sendSubtitle(String callId, String text, String to) =>
-      send({'type': 'subtitle', 'callId': callId, 'text': text, 'to': to});
+  void sendSubtitle(String callId, String text, String translated, String to) =>
+      send({'type': 'subtitle', 'callId': callId, 'text': text, 'translated': translated, 'to': to});
   void hangup(String callId) => send({'type': 'hangup', 'callId': callId});
 
   void disconnect() {

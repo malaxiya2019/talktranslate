@@ -50,7 +50,9 @@ class AppProvider extends ChangeNotifier {
   String? get peerPhone => callService.peerPhone;
 
   String get subtitle => callService.subtitle;
+  String get subtitleTranslated => callService.subtitleTranslated;
   String get mySpeech => callService.mySpeech;
+  String get mySpeechTranslated => callService.mySpeechTranslated;
 
   Future<void> call(String to) async => await callService.call(to);
   Future<void> accept() async { await callService.accept(); callService.startSTT(); }

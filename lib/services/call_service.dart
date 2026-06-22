@@ -3,6 +3,7 @@ import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import '../models/call.dart';
 import 'signaling_service.dart';
+import 'translation_service.dart';
 
 class CallService {
   final SignalingService _signal;
@@ -15,10 +16,15 @@ class CallService {
   String _callId = '';
   String? _peerPhone;
   CallStatus _status = CallStatus.idle;
-  String _subtitle = '';        // 对方说的话 (字幕)
+  final TranslationService translator = TranslationService();
+  String _subtitle = '';        // 对方说的话 (原文)
+  String _subtitleTranslated = '';  // 对方说的话 (翻译)
   String _mySpeech = '';        // 我刚说的话
+  String _mySpeechTranslated = ''; // 我刚说的话 (翻译)
   String get subtitle => _subtitle;
+  String get subtitleTranslated => _subtitleTranslated;
   String get mySpeech => _mySpeech;
+  String get mySpeechTranslated => _mySpeechTranslated;
 
   stt.SpeechToText? _speech;
   bool _sttRunning = false;
@@ -133,7 +139,8 @@ class CallService {
         break;
       case 'subtitle':
         _subtitle = msg['text'] as String;
-        _events.add({'type': 'subtitle', 'text': _subtitle});
+        _subtitleTranslated = (msg['translated'] as String?) ?? '';
+        _events.add({'type': 'subtitle', 'text': _subtitle, 'translated': _subtitleTranslated});
         break;
       case 'hangup':
         _cleanup();
@@ -177,8 +184,16 @@ class CallService {
       if (text.isNotEmpty) {
         _mySpeech = text;
         _events.add({'type': 'mySpeech', 'text': text});
+
+        // 翻译
+        String translated = '';
+        try {
+          translated = await translator.translate(text, 'zh-CN', 'en-US');
+        } catch (_) {}
+        _mySpeechTranslated = translated;
+
         if (_callId.isNotEmpty && _peerPhone != null) {
-          _signal.sendSubtitle(_callId, text, _peerPhone!);
+          _signal.sendSubtitle(_callId, text, translated, _peerPhone!);
         }
       }
       await Future.delayed(const Duration(milliseconds: 300));
@@ -199,7 +214,7 @@ class CallService {
     _localStream?.getTracks().forEach((t) => t.stop()); _localStream = null;
     _remoteStream = null;
     _status = CallStatus.idle;
-    _subtitle = ''; _mySpeech = '';
+    _subtitle = ''; _subtitleTranslated = ''; _mySpeech = ''; _mySpeechTranslated = '';
     _events.add({'type': 'status', 'status': _status});
     _callId = ''; _peerPhone = null;
   }
