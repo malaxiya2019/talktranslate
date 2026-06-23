@@ -44,8 +44,8 @@ class TranslationPipeline {
   Stream<TranslationResult> get onResult => _resultCtl.stream;
 
   TranslationPipeline()
-      : _translator = TranslationService(),
-        _tts = FlutterTts() {
+    : _translator = TranslationService(),
+      _tts = FlutterTts() {
     _initTts();
   }
 
@@ -104,7 +104,7 @@ class TranslationPipeline {
           text = r.recognizedWords;
           if (r.finalResult && !completer.isCompleted) completer.complete();
         },
-        listenOptions: SpeechListenOptions(
+        listenOptions: stt.SpeechListenOptions(
           localeId: _sttLocale(_myLang),
           cancelOnError: true,
           partialResults: true,
@@ -123,12 +123,14 @@ class TranslationPipeline {
         try {
           translated = await _translator.translate(text, _myLang, _peerLang);
         } catch (_) {}
-        _resultCtl.add(TranslationResult(
-          original: text,
-          translated: translated,
-          sourceLang: _myLang,
-          targetLang: _peerLang,
-        ));
+        _resultCtl.add(
+          TranslationResult(
+            original: text,
+            translated: translated,
+            sourceLang: _myLang,
+            targetLang: _peerLang,
+          ),
+        );
         onMySpeech?.call(text, translated);
       }
       await Future.delayed(const Duration(milliseconds: 300));
@@ -151,19 +153,33 @@ class TranslationPipeline {
 
   String _sttLocale(String code) {
     const map = {
-      'zh-CN': 'zh_CN', 'en-US': 'en_US', 'ja-JP': 'ja_JP',
-      'ko-KR': 'ko_KR', 'es-ES': 'es_ES', 'fr-FR': 'fr_FR',
-      'de-DE': 'de_DE', 'pt-BR': 'pt_BR', 'ru-RU': 'ru_RU',
-      'ar-SA': 'ar_SA', 'th-TH': 'th_TH', 'vi-VN': 'vi_VN',
+      'zh-CN': 'zh_CN',
+      'en-US': 'en_US',
+      'ja-JP': 'ja_JP',
+      'ko-KR': 'ko_KR',
+      'es-ES': 'es_ES',
+      'fr-FR': 'fr_FR',
+      'de-DE': 'de_DE',
+      'pt-BR': 'pt_BR',
+      'ru-RU': 'ru_RU',
+      'ar-SA': 'ar_SA',
+      'th-TH': 'th_TH',
+      'vi-VN': 'vi_VN',
     };
     return map[code] ?? 'en_US';
   }
 
   String _mapTtsLang(String code) {
     const map = {
-      'zh-CN': 'zh-CN', 'en-US': 'en-US', 'ja-JP': 'ja-JP',
-      'ko-KR': 'ko-KR', 'es-ES': 'es-ES', 'fr-FR': 'fr-FR',
-      'de-DE': 'de-DE', 'pt-BR': 'pt-BR', 'ru-RU': 'ru-RU',
+      'zh-CN': 'zh-CN',
+      'en-US': 'en-US',
+      'ja-JP': 'ja-JP',
+      'ko-KR': 'ko-KR',
+      'es-ES': 'es-ES',
+      'fr-FR': 'fr-FR',
+      'de-DE': 'de-DE',
+      'pt-BR': 'pt-BR',
+      'ru-RU': 'ru-RU',
     };
     return map[code] ?? 'en-US';
   }

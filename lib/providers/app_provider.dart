@@ -57,19 +57,42 @@ class AppProvider extends ChangeNotifier {
 
     signaling.events.listen((e) {
       switch (e['type']) {
-        case 'registered': _connected = true; _phone = e['phone']; notifyListeners(); break;
-        case 'disconnected': _connected = false; notifyListeners(); break;
-        case 'online': _onlineUsers = List<String>.from(e['users']); notifyListeners(); break;
-        case 'incoming': callService.incoming(e['callId'], e['from']); notifyListeners(); break;
-        case 'error': _toast = e['message']; notifyListeners(); break;
+        case 'registered':
+          _connected = true;
+          _phone = e['phone'];
+          notifyListeners();
+          break;
+        case 'disconnected':
+          _connected = false;
+          notifyListeners();
+          break;
+        case 'online':
+          _onlineUsers = List<String>.from(e['users']);
+          notifyListeners();
+          break;
+        case 'incoming':
+          callService.incoming(e['callId'], e['from']);
+          notifyListeners();
+          break;
+        case 'error':
+          _toast = e['message'];
+          notifyListeners();
+          break;
       }
     });
 
     callService.events.listen((e) {
-      if (e['type'] == 'toast') { _toast = e['message']; notifyListeners(); }
-      if (e['type'] == 'status' || e['type'] == 'subtitle' || e['type'] == 'mySpeech') notifyListeners();
+      if (e['type'] == 'toast') {
+        _toast = e['message'];
+        notifyListeners();
+      }
+      if (e['type'] == 'status' ||
+          e['type'] == 'subtitle' ||
+          e['type'] == 'mySpeech')
+        notifyListeners();
       if (e['type'] == 'call_record') _saveCallRecord(e);
-      if (e['type'] == 'snapshot') _persistSnapshot(Map<String, dynamic>.from(e['snapshot'] as Map));
+      if (e['type'] == 'snapshot')
+        _persistSnapshot(Map<String, dynamic>.from(e['snapshot'] as Map));
       if (e['type'] == 'snapshot_clear') _clearSnapshot();
     });
   }
@@ -123,7 +146,10 @@ class AppProvider extends ChangeNotifier {
     if (json == null || json.isEmpty) return [];
     try {
       final list = jsonDecode(json) as List;
-      return list.cast<Map<String, dynamic>>().map((m) => CallRecord.fromJson(m)).toList();
+      return list
+          .cast<Map<String, dynamic>>()
+          .map((m) => CallRecord.fromJson(m))
+          .toList();
     } catch (_) {
       return [];
     }
@@ -138,11 +164,15 @@ class AppProvider extends ChangeNotifier {
       lastTranscript: data['transcript'] as String?,
     );
     _callHistory.insert(0, record);
-    if (_callHistory.length > 100) _callHistory.removeRange(100, _callHistory.length);
+    if (_callHistory.length > 100)
+      _callHistory.removeRange(100, _callHistory.length);
     notifyListeners();
 
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('call_history', jsonEncode(_callHistory.map((r) => r.toJson()).toList()));
+    await prefs.setString(
+      'call_history',
+      jsonEncode(_callHistory.map((r) => r.toJson()).toList()),
+    );
   }
 
   Future<void> saveSettings({
@@ -172,14 +202,22 @@ class AppProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setServer(String url) { _serverUrl = url; notifyListeners(); }
+  void setServer(String url) {
+    _serverUrl = url;
+    notifyListeners();
+  }
 
   Future<void> login(String phone) async {
     _phone = phone;
     await signaling.connect(_serverUrl, phone);
   }
 
-  void logout() { signaling.disconnect(); _connected = false; _phone = null; notifyListeners(); }
+  void logout() {
+    signaling.disconnect();
+    _connected = false;
+    _phone = null;
+    notifyListeners();
+  }
 
   CallState get callState => callService.state;
   CallState get callStatus => callService.state;
@@ -197,5 +235,8 @@ class AppProvider extends ChangeNotifier {
   Future<void> reject() async => await callService.reject();
   Future<void> hangup() async => await callService.hangup();
 
-  void clearToast() { _toast = null; notifyListeners(); }
+  void clearToast() {
+    _toast = null;
+    notifyListeners();
+  }
 }

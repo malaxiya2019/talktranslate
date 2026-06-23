@@ -250,7 +250,10 @@ class CallService {
     try {
       await getLocalStream();
       _pc = await createPC();
-      final offer = await _pc!.createOffer({'offerToReceiveAudio': true, 'offerToReceiveVideo': false});
+      final offer = await _pc!.createOffer({
+        'offerToReceiveAudio': true,
+        'offerToReceiveVideo': false,
+      });
       await _pc!.setLocalDescription(offer);
       _signal.sendOffer(_callId, offer.sdp ?? '');
       pipeline.start();
@@ -288,7 +291,10 @@ class CallService {
           _stateMachine.transition(CallState.inCall);
         }
         if (_pc != null) {
-          final offer = await _pc!.createOffer({'offerToReceiveAudio': true, 'offerToReceiveVideo': false});
+          final offer = await _pc!.createOffer({
+            'offerToReceiveAudio': true,
+            'offerToReceiveVideo': false,
+          });
           await _pc!.setLocalDescription(offer);
           _signal.sendOffer(_callId, offer.sdp ?? '');
         }

@@ -68,9 +68,7 @@ class OverlayService {
 
     try {
       await FlutterOverlayWindow.requestPermission();
-      await FlutterOverlayWindow.showOverlay(
-        enableDrag: true,
-      );
+      await FlutterOverlayWindow.showOverlay(enableDrag: true);
       _active = true;
       _listen();
 
@@ -80,10 +78,10 @@ class OverlayService {
         'state': 'inCall',
         'subtitle': _cachedSubtitle,
         'translated': _cachedTranslated,
-        'history': subtitleBuffer.recent(5).map((item) => {
-          'text': item.text,
-          'translated': item.translated,
-        }).toList(),
+        'history': subtitleBuffer
+            .recent(5)
+            .map((item) => {'text': item.text, 'translated': item.translated})
+            .toList(),
       });
       return true;
     } catch (_) {
@@ -118,10 +116,7 @@ class OverlayService {
     _cachedSubtitle = text;
     _cachedTranslated = translated;
     if (!_active) return;
-    await _pushToOverlay({
-      'subtitle': text,
-      'translated': translated,
-    });
+    await _pushToOverlay({'subtitle': text, 'translated': translated});
   }
 
   /// 将主应用带回前台

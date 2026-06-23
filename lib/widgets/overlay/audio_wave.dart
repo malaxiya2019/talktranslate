@@ -33,13 +33,21 @@ class _AudioWaveState extends State<AudioWave> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _controllers = List.generate(widget.barCount, (_) => AnimationController(
-      vsync: this,
-      duration: Duration(milliseconds: 400 + _random.nextInt(300)),
-    ));
-    _animations = _controllers.map((c) => Tween<double>(begin: 0.15, end: 1.0).animate(
-      CurvedAnimation(parent: c, curve: Curves.easeInOut),
-    )).toList();
+    _controllers = List.generate(
+      widget.barCount,
+      (_) => AnimationController(
+        vsync: this,
+        duration: Duration(milliseconds: 400 + _random.nextInt(300)),
+      ),
+    );
+    _animations = _controllers
+        .map(
+          (c) => Tween<double>(
+            begin: 0.15,
+            end: 1.0,
+          ).animate(CurvedAnimation(parent: c, curve: Curves.easeInOut)),
+        )
+        .toList();
     if (widget.active) _startWave();
   }
 
@@ -105,7 +113,9 @@ class _AudioWaveState extends State<AudioWave> with TickerProviderStateMixin {
               width: 3,
               height: 4 + 14 * _animations[i].value,
               decoration: BoxDecoration(
-                color: widget.barColor.withValues(alpha: 0.4 + 0.6 * _animations[i].value),
+                color: widget.barColor.withValues(
+                  alpha: 0.4 + 0.6 * _animations[i].value,
+                ),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),

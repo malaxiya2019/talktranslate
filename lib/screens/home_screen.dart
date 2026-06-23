@@ -371,7 +371,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       }
                     },
                     style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: Colors.blue.withValues(alpha: 0.3)),
+                      side: BorderSide(
+                        color: Colors.blue.withValues(alpha: 0.3),
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
@@ -718,7 +720,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       if (i == contacts.length) {
                         return ListTile(
                           leading: CircleAvatar(
-                            backgroundColor: Colors.green.withValues(alpha: 0.1),
+                            backgroundColor: Colors.green.withValues(
+                              alpha: 0.1,
+                            ),
                             child: const Icon(
                               Icons.person_add_alt,
                               size: 20,
