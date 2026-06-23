@@ -11,6 +11,14 @@ import '../widgets/call/call_timer.dart';
 import '../widgets/chat/message_bubble.dart';
 import '../widgets/chat/translation_card.dart';
 
+/// 语言显示映射
+const _langDisplay = <String, String>{
+  'zh-CN': '🇨🇳 中文', 'en-US': '🇺🇸 English', 'ja-JP': '🇯🇵 日本語',
+  'ko-KR': '🇰🇷 한국어', 'es-ES': '🇪🇸 Español', 'fr-FR': '🇫🇷 Français',
+  'de-DE': '🇩🇪 Deutsch', 'pt-BR': '🇧🇷 Português', 'ru-RU': '🇷🇺 Русский',
+  'ar-SA': '🇸🇦 العربية', 'th-TH': '🇹🇭 ไทย', 'vi-VN': '🇻🇳 Tiếng Việt',
+};
+
 /// 通话页面 — Selector 局部绑定，防 rebuild 风暴
 class CallScreen extends StatefulWidget {
   const CallScreen({super.key});
@@ -286,12 +294,18 @@ class _CallScreenState extends State<CallScreen>
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text('🇨🇳 中文', style: TextStyle(color: Colors.grey[500], fontSize: 13)),
+            Selector<AppProvider, String>(
+              selector: (_, p) => _langDisplay[p.myLang] ?? p.myLang,
+              builder: (_, lang, __) => Text(lang, style: TextStyle(color: Colors.grey[500], fontSize: 13)),
+            ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Icon(Icons.swap_horiz, color: Colors.grey[600], size: 18),
             ),
-            Text('🇺🇸 English', style: TextStyle(color: Colors.grey[500], fontSize: 13)),
+            Selector<AppProvider, String>(
+              selector: (_, p) => _langDisplay[p.peerLang] ?? p.peerLang,
+              builder: (_, lang, __) => Text(lang, style: TextStyle(color: Colors.grey[500], fontSize: 13)),
+            ),
           ],
         ),
         const SizedBox(height: 4),

@@ -30,7 +30,19 @@ keytool -genkey -v -keystore android/app/upload-keystore.jks \
   - `INTERNET`
   - `ACCESS_NETWORK_STATE`
 
-## ⬜ 4. 构建验证
+## ✅ 4. 代码审查修复 (v2.0.1)
+
+本次代码审查已修复以下问题：
+
+| # | 问题 | 文件 | 状态 |
+|---|------|------|:----:|
+| 1 | 通话记录在超时/失败路径下不保存 | `call_service.dart` | ✅ 已修复 |
+| 2 | 通话页语言标签硬编码为中文/英文 | `call_screen.dart` | ✅ 改为动态语言选择 |
+| 3 | WebSocket Stream 缺少 onError 处理器 | `signaling_service.dart` | ✅ 已添加 |
+| 4 | 翻译 HTTP 请求无超时限制 | `translation_service.dart` | ✅ 添加 15s 超时 |
+| 5 | "新建通话"按钮 onTap 为空 | `home_screen.dart` | ✅ 添加拨号对话框 |
+
+## ⬜ 5. 构建验证
 
 ```bash
 flutter clean
@@ -52,8 +64,9 @@ flutter build appbundle --release
 - [ ] 真机测试：悬浮窗最小化 → 权限 → 气泡显示
 - [ ] 真机测试：前台服务通知显示
 - [ ] 真机测试：杀进程后重新打开 → 状态恢复
+- [ ] 真机测试：新建通话对话框 → 输入号码 → 呼叫
 
-## ⬜ 5. Google Play 发布
+## ⬜ 6. Google Play 发布
 
 - [ ] 创建 Google Play Console 开发者账号
 - [ ] 创建应用（对应 `com.talktranslate.talktranslate`）
@@ -67,7 +80,7 @@ flutter build appbundle --release
 - [ ] 内容分级问卷
 - [ ] 定价与分发：免费
 
-## ⬜ 6. Android 兼容性
+## ⬜ 7. Android 兼容性
 
 | 检查项 | 要求 | 状态 |
 |--------|------|------|
@@ -77,7 +90,7 @@ flutter build appbundle --release
 | 64-bit abi | arm64-v8a | ✅ split-per-abi |
 | x86_64 | 模拟器 | ✅ split-per-abi |
 
-## ⬜ 7. 国产 ROM 适配
+## ⬜ 8. 国产 ROM 适配
 
 | 品牌 | 需要用户手动开启 |
 |------|-----------------|
@@ -86,7 +99,7 @@ flutter build appbundle --release
 | OPPO/VIVO | 设置 → 应用管理 → 悬浮窗 |
 | 三星 | 默认允许 |
 
-## ⬜ 8. 发布前最终检查
+## ⬜ 9. 发布前最终检查
 
 - [ ] 清空 SharedPreferences 后首次启动正常
 - [ ] 无 API Key 时优雅提示（不崩溃）
@@ -97,5 +110,6 @@ flutter build appbundle --release
 
 ---
 
-> 版本：v2.0.0
+> 版本：v2.0.1-dev
 > 更新日期：2026-06-24
+> 上一版本：v2.0.0 — 代码审查 + 5 个 Bug 修复

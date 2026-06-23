@@ -94,10 +94,9 @@ class AppProvider extends ChangeNotifier {
     _callHistory = _loadCallHistory(prefs);
 
     // 注入到服务层
-    callService.setApiKey(_apiKey);
-    callService.setMyLang(_myLang);
-    callService.setPeerLang(_peerLang);
-    callService.setTtsEnabled(_ttsEnabled);
+    callService.pipeline.setApiKey(_apiKey);
+    callService.pipeline.setLanguages(_myLang, _peerLang);
+    callService.pipeline.setTtsEnabled(_ttsEnabled);
 
     notifyListeners();
   }
@@ -166,10 +165,9 @@ class AppProvider extends ChangeNotifier {
     _peerLang = peerLang;
     _ttsEnabled = ttsEnabled;
 
-    callService.setApiKey(apiKey);
-    callService.setMyLang(myLang);
-    callService.setPeerLang(peerLang);
-    callService.setTtsEnabled(ttsEnabled);
+    callService.pipeline.setApiKey(apiKey);
+    callService.pipeline.setLanguages(myLang, peerLang);
+    callService.pipeline.setTtsEnabled(ttsEnabled);
 
     notifyListeners();
   }

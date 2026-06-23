@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
@@ -22,7 +23,11 @@ class TranslationService {
         body: jsonEncode({
           'model': 'deepseek-chat',
           'messages': [
-            {'role': 'system', 'content': 'Translate the following text from ${_lang(from)} to ${_lang(to)}. Output ONLY the translation.'},
+            {
+              'role': 'system',
+              'content':
+                  'Translate the following text from ${_lang(from)} to ${_lang(to)}. Output ONLY the translation.',
+            },
             {'role': 'user', 'content': text},
           ],
           'temperature': 0.1,
@@ -35,6 +40,8 @@ class TranslationService {
         return (data['choices'][0]['message']['content'] as String).trim();
       }
       return '[API ${resp.statusCode}] $text';
+    } on TimeoutException {
+      return '[请求超时] $text';
     } catch (e) {
       return '[翻译失败] $text';
     }
@@ -42,10 +49,18 @@ class TranslationService {
 
   String _lang(String code) {
     const map = {
-      'zh-CN': 'Chinese', 'en-US': 'English', 'ja-JP': 'Japanese',
-      'ko-KR': 'Korean', 'es-ES': 'Spanish', 'fr-FR': 'French',
-      'de-DE': 'German', 'pt-BR': 'Portuguese', 'ru-RU': 'Russian',
-      'ar-SA': 'Arabic', 'th-TH': 'Thai', 'vi-VN': 'Vietnamese',
+      'zh-CN': 'Chinese',
+      'en-US': 'English',
+      'ja-JP': 'Japanese',
+      'ko-KR': 'Korean',
+      'es-ES': 'Spanish',
+      'fr-FR': 'French',
+      'de-DE': 'German',
+      'pt-BR': 'Portuguese',
+      'ru-RU': 'Russian',
+      'ar-SA': 'Arabic',
+      'th-TH': 'Thai',
+      'vi-VN': 'Vietnamese',
     };
     return map[code] ?? 'English';
   }

@@ -7,7 +7,10 @@ import 'history_screen.dart';
 
 /// 国家代码
 class CountryCode {
-  final String flag; final String code; final String name; final String dial;
+  final String flag;
+  final String code;
+  final String name;
+  final String dial;
   const CountryCode(this.flag, this.code, this.name, this.dial);
   static const list = [
     CountryCode('🇨🇳', '+86', '中国', '+86'),
@@ -59,7 +62,9 @@ class _HomeScreenState extends State<HomeScreen> {
         builder: (context, p, _) {
           if (p.toast != null) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(p.toast!)));
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text(p.toast!)));
               p.clearToast();
             });
           }
@@ -75,7 +80,11 @@ class _HomeScreenState extends State<HomeScreen> {
   int _wizardPage = 0;
   Widget _buildWizard() {
     final pages = [
-      _wizardPageData('🗣️', '欢迎使用 TalkTranslate', '实时翻译语音通话平台\n跨国通话 · AI 字幕 · 清晰音质'),
+      _wizardPageData(
+        '🗣️',
+        '欢迎使用 TalkTranslate',
+        '实时翻译语音通话平台\n跨国通话 · AI 字幕 · 清晰音质',
+      ),
       _wizardPageData('🌍', '支持多国语言', '中、英、日、韩、西、法、德…\n自动识别、实时翻译'),
       _wizardPageData('🔒', '安全可靠', '端到端加密通话\n您的隐私安全无忧'),
     ];
@@ -88,46 +97,82 @@ class _HomeScreenState extends State<HomeScreen> {
             const Spacer(flex: 2),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 40),
-              child: Column(children: [
-                Text(pages[_wizardPage].emoji, style: const TextStyle(fontSize: 64)),
-                const SizedBox(height: 24),
-                Text(pages[_wizardPage].title, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 12),
-                Text(pages[_wizardPage].desc, textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 15, color: Colors.grey[600], height: 1.5)),
-              ]),
+              child: Column(
+                children: [
+                  Text(
+                    pages[_wizardPage].emoji,
+                    style: const TextStyle(fontSize: 64),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    pages[_wizardPage].title,
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    pages[_wizardPage].desc,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: Colors.grey[600],
+                      height: 1.5,
+                    ),
+                  ),
+                ],
+              ),
             ),
             const Spacer(),
             // 指示点
-            Row(mainAxisAlignment: MainAxisAlignment.center, children: List.generate(3, (i) =>
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 4),
-                width: _wizardPage == i ? 24 : 8, height: 8,
-                decoration: BoxDecoration(
-                  color: _wizardPage == i ? Colors.blue : Colors.grey[300],
-                  borderRadius: BorderRadius.circular(4),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                3,
+                (i) => Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  width: _wizardPage == i ? 24 : 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: _wizardPage == i ? Colors.blue : Colors.grey[300],
+                    borderRadius: BorderRadius.circular(4),
+                  ),
                 ),
               ),
-            )),
+            ),
             const SizedBox(height: 32),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 32),
               child: SizedBox(
-                width: double.infinity, height: 50,
+                width: double.infinity,
+                height: 50,
                 child: ElevatedButton(
                   onPressed: () {
-                    if (_wizardPage < 2) setState(() => _wizardPage++);
-                    else setState(() => _showWizard = false);
+                    if (_wizardPage < 2)
+                      setState(() => _wizardPage++);
+                    else
+                      setState(() => _showWizard = false);
                   },
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.blue, foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                  child: Text(_wizardPage < 2 ? '下一步' : '开始使用', style: const TextStyle(fontSize: 16)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Text(
+                    _wizardPage < 2 ? '下一步' : '开始使用',
+                    style: const TextStyle(fontSize: 16),
+                  ),
                 ),
               ),
             ),
             if (_wizardPage < 2)
-              TextButton(onPressed: () => setState(() => _showWizard = false),
-                  child: Text('跳过', style: TextStyle(color: Colors.grey[400]))),
+              TextButton(
+                onPressed: () => setState(() => _showWizard = false),
+                child: Text('跳过', style: TextStyle(color: Colors.grey[400])),
+              ),
             const SizedBox(height: 32),
           ],
         ),
@@ -135,8 +180,11 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  ({String emoji, String title, String desc}) _wizardPageData(String emoji, String title, String desc) =>
-    (emoji: emoji, title: title, desc: desc);
+  ({String emoji, String title, String desc}) _wizardPageData(
+    String emoji,
+    String title,
+    String desc,
+  ) => (emoji: emoji, title: title, desc: desc);
 
   // ── 登录页 ──
 
@@ -152,50 +200,99 @@ class _HomeScreenState extends State<HomeScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Container(width: 8, height: 8, decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: _serverCtl.text.contains('localhost') ? Colors.orange : Colors.green,
-                  )),
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: _serverCtl.text.contains('localhost')
+                          ? Colors.orange
+                          : Colors.green,
+                    ),
+                  ),
                   const SizedBox(width: 6),
-                  Text(_serverCtl.text.contains('localhost') ? '未连接' : '就绪',
-                      style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+                  Text(
+                    _serverCtl.text.contains('localhost') ? '未连接' : '就绪',
+                    style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                  ),
                 ],
               ),
               const SizedBox(height: 24),
 
               // Logo
               Container(
-                width: 72, height: 72,
-                decoration: BoxDecoration(color: Colors.blue.withOpacity(0.1), borderRadius: BorderRadius.circular(18)),
-                child: const Icon(Icons.translate, size: 40, color: Colors.blue),
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  color: Colors.blue.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: const Icon(
+                  Icons.translate,
+                  size: 40,
+                  color: Colors.blue,
+                ),
               ),
               const SizedBox(height: 16),
-              const Text('TalkTranslate', style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
-              Text('实时翻译语音通话平台', style: TextStyle(fontSize: 13, color: Colors.grey[500])),
+              const Text(
+                'TalkTranslate',
+                style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+              ),
+              Text(
+                '实时翻译语音通话平台',
+                style: TextStyle(fontSize: 13, color: Colors.grey[500]),
+              ),
               const SizedBox(height: 32),
 
               // 服务器 (可折叠)
               Container(
                 margin: const EdgeInsets.only(bottom: 16),
                 padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: Colors.grey[50], borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey[200]!)),
+                decoration: BoxDecoration(
+                  color: Colors.grey[50],
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey[200]!),
+                ),
                 child: Column(
                   children: [
-                    Row(children: [
-                      Icon(Icons.dns, size: 16, color: Colors.grey[500]),
-                      const SizedBox(width: 6),
-                      Text('服务器配置', style: TextStyle(fontSize: 13, color: Colors.grey[500])),
-                      const Spacer(),
-                      TextButton(onPressed: () => _serverCtl.text = _defaultServer,
-                          child: const Text('默认', style: TextStyle(fontSize: 12))),
-                    ]),
+                    Row(
+                      children: [
+                        Icon(Icons.dns, size: 16, color: Colors.grey[500]),
+                        const SizedBox(width: 6),
+                        Text(
+                          '服务器配置',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey[500],
+                          ),
+                        ),
+                        const Spacer(),
+                        TextButton(
+                          onPressed: () => _serverCtl.text = _defaultServer,
+                          child: const Text(
+                            '默认',
+                            style: TextStyle(fontSize: 12),
+                          ),
+                        ),
+                      ],
+                    ),
                     TextField(
                       controller: _serverCtl,
                       decoration: InputDecoration(
                         hintText: 'ws://your-server.com:3459',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
-                        filled: true, fillColor: Colors.white, isDense: true,
-                        contentPadding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide.none,
+                        ),
+                        filled: true,
+                        fillColor: Colors.white,
+                        isDense: true,
+                        contentPadding: const EdgeInsets.fromLTRB(
+                          12,
+                          10,
+                          12,
+                          10,
+                        ),
                       ),
                       style: const TextStyle(fontSize: 13),
                     ),
@@ -205,51 +302,84 @@ class _HomeScreenState extends State<HomeScreen> {
 
               // 手机号
               Container(
-                decoration: BoxDecoration(border: Border.all(color: Colors.grey[300]!), borderRadius: BorderRadius.circular(12)),
-                child: Row(children: [
-                  InkWell(
-                    onTap: () => _showCountryPicker(),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                      height: 48,
-                      child: Row(mainAxisSize: MainAxisSize.min, children: [
-                        Text(_country.flag, style: const TextStyle(fontSize: 20)),
-                        const SizedBox(width: 4),
-                        Text(_country.dial, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
-                        const Icon(Icons.arrow_drop_down, size: 20, color: Colors.grey),
-                      ]),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey[300]!),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    InkWell(
+                      onTap: () => _showCountryPicker(),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        height: 48,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              _country.flag,
+                              style: const TextStyle(fontSize: 20),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              _country.dial,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const Icon(
+                              Icons.arrow_drop_down,
+                              size: 20,
+                              color: Colors.grey,
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
-                  Container(width: 1, height: 28, color: Colors.grey[300]),
-                  Expanded(
-                    child: TextField(
-                      controller: _phoneCtl,
-                      decoration: const InputDecoration(hintText: '请输入手机号', border: InputBorder.none,
-                          contentPadding: EdgeInsets.fromLTRB(12, 14, 12, 14)),
-                      keyboardType: TextInputType.phone,
-                      style: const TextStyle(fontSize: 16),
+                    Container(width: 1, height: 28, color: Colors.grey[300]),
+                    Expanded(
+                      child: TextField(
+                        controller: _phoneCtl,
+                        decoration: const InputDecoration(
+                          hintText: '请输入手机号',
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.fromLTRB(12, 14, 12, 14),
+                        ),
+                        keyboardType: TextInputType.phone,
+                        style: const TextStyle(fontSize: 16),
+                      ),
                     ),
-                  ),
-                ]),
+                  ],
+                ),
               ),
 
               // 获取验证码
               if (!_sentCode) ...[
                 const SizedBox(height: 12),
                 SizedBox(
-                  width: double.infinity, height: 44,
+                  width: double.infinity,
+                  height: 44,
                   child: OutlinedButton(
                     onPressed: () {
                       if (_phoneCtl.text.trim().length >= 6) {
-                        setState(() { _sentCode = true; _codeCountdown = 60; });
+                        setState(() {
+                          _sentCode = true;
+                          _codeCountdown = 60;
+                        });
                         _startCountdown();
                       }
                     },
                     style: OutlinedButton.styleFrom(
                       side: BorderSide(color: Colors.blue.withOpacity(0.3)),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
-                    child: Text('获取验证码', style: TextStyle(fontSize: 15, color: Colors.blue[600])),
+                    child: Text(
+                      '获取验证码',
+                      style: TextStyle(fontSize: 15, color: Colors.blue[600]),
+                    ),
                   ),
                 ),
               ],
@@ -258,33 +388,58 @@ class _HomeScreenState extends State<HomeScreen> {
               if (_sentCode) ...[
                 const SizedBox(height: 12),
                 Container(
-                  decoration: BoxDecoration(border: Border.all(color: Colors.grey[300]!), borderRadius: BorderRadius.circular(12)),
-                  child: Row(children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      height: 48,
-                      child: Row(mainAxisSize: MainAxisSize.min, children: [
-                        Icon(Icons.sms, size: 18, color: Colors.grey[500]),
-                        const SizedBox(width: 6),
-                        Text('验证码', style: TextStyle(fontSize: 13, color: Colors.grey[500])),
-                      ]),
-                    ),
-                    Container(width: 1, height: 28, color: Colors.grey[300]),
-                    Expanded(
-                      child: TextField(
-                        controller: _codeCtl,
-                        decoration: InputDecoration(
-                          hintText: '输入6位验证码',
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.fromLTRB(12, 14, 12, 14),
-                          suffixText: '${_codeCountdown}s',
-                          suffixStyle: TextStyle(fontSize: 12, color: Colors.grey[400]),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey[300]!),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        height: 48,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.sms, size: 18, color: Colors.grey[500]),
+                            const SizedBox(width: 6),
+                            Text(
+                              '验证码',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey[500],
+                              ),
+                            ),
+                          ],
                         ),
-                        keyboardType: TextInputType.number,
-                        style: const TextStyle(fontSize: 16, letterSpacing: 8),
                       ),
-                    ),
-                  ]),
+                      Container(width: 1, height: 28, color: Colors.grey[300]),
+                      Expanded(
+                        child: TextField(
+                          controller: _codeCtl,
+                          decoration: InputDecoration(
+                            hintText: '输入6位验证码',
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.fromLTRB(
+                              12,
+                              14,
+                              12,
+                              14,
+                            ),
+                            suffixText: '${_codeCountdown}s',
+                            suffixStyle: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[400],
+                            ),
+                          ),
+                          keyboardType: TextInputType.number,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            letterSpacing: 8,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
 
@@ -292,47 +447,97 @@ class _HomeScreenState extends State<HomeScreen> {
 
               // 登录按钮
               SizedBox(
-                width: double.infinity, height: 50,
+                width: double.infinity,
+                height: 50,
                 child: ElevatedButton(
-                  onPressed: (_phoneCtl.text.trim().length >= 6 && _codeCtl.text.length >= 4 && _agreed)
-                      ? () => p.login('${_country.dial} ${_phoneCtl.text.trim()}')
+                  onPressed:
+                      (_phoneCtl.text.trim().length >= 6 &&
+                          _codeCtl.text.length >= 4 &&
+                          _agreed)
+                      ? () =>
+                            p.login('${_country.dial} ${_phoneCtl.text.trim()}')
                       : null,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue, foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    elevation: 0, disabledBackgroundColor: Colors.grey[200],
+                    backgroundColor: Colors.blue,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                    disabledBackgroundColor: Colors.grey[200],
                   ),
-                  child: const Text('登录', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                  child: const Text(
+                    '登录',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
                 ),
               ),
 
               const SizedBox(height: 16),
 
               // 协议
-              Row(children: [
-                SizedBox(width: 20, height: 20,
-                    child: Checkbox(value: _agreed, onChanged: (v) => setState(() => _agreed = v ?? false),
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap)),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text.rich(TextSpan(
-                    text: '我已阅读并同意 ', style: TextStyle(fontSize: 12, color: Colors.grey[500]),
-                    children: [
-                      TextSpan(text: '《用户协议》', style: TextStyle(color: Colors.blue[600])),
-                      TextSpan(text: ' ', style: TextStyle(color: Colors.grey[500])),
-                      TextSpan(text: '《隐私政策》', style: TextStyle(color: Colors.blue[600])),
-                    ],
-                  )),
-                ),
-              ]),
+              Row(
+                children: [
+                  SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: Checkbox(
+                      value: _agreed,
+                      onChanged: (v) => setState(() => _agreed = v ?? false),
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text.rich(
+                      TextSpan(
+                        text: '我已阅读并同意 ',
+                        style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                        children: [
+                          TextSpan(
+                            text: '《用户协议》',
+                            style: TextStyle(color: Colors.blue[600]),
+                          ),
+                          TextSpan(
+                            text: ' ',
+                            style: TextStyle(color: Colors.grey[500]),
+                          ),
+                          TextSpan(
+                            text: '《隐私政策》',
+                            style: TextStyle(color: Colors.blue[600]),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(height: 16),
-              Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                TextButton(onPressed: () {}, child: Text('新用户注册', style: TextStyle(fontSize: 13, color: Colors.grey[500]))),
-                Text('|', style: TextStyle(color: Colors.grey[300])),
-                TextButton(onPressed: () {}, child: Text('忘记密码', style: TextStyle(fontSize: 13, color: Colors.grey[500]))),
-              ]),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  TextButton(
+                    onPressed: () {},
+                    child: Text(
+                      '新用户注册',
+                      style: TextStyle(fontSize: 13, color: Colors.grey[500]),
+                    ),
+                  ),
+                  Text('|', style: TextStyle(color: Colors.grey[300])),
+                  TextButton(
+                    onPressed: () {},
+                    child: Text(
+                      '忘记密码',
+                      style: TextStyle(fontSize: 13, color: Colors.grey[500]),
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(height: 8),
-              Text('Version 2.0.0', style: TextStyle(fontSize: 11, color: Colors.grey[400])),
+              Text(
+                'Version 2.0.0',
+                style: TextStyle(fontSize: 11, color: Colors.grey[400]),
+              ),
             ],
           ),
         ),
@@ -348,19 +553,45 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.all(12),
-            child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2))),
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
           ),
-          const Padding(padding: EdgeInsets.only(bottom: 8), child: Text('选择国家/地区', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold))),
+          const Padding(
+            padding: EdgeInsets.only(bottom: 8),
+            child: Text(
+              '选择国家/地区',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+          ),
           const Divider(height: 1),
           SizedBox(
             height: 400,
             child: ListView(
-              children: CountryCode.list.map((c) => ListTile(
-                leading: Text(c.flag, style: const TextStyle(fontSize: 24)),
-                title: Text(c.name),
-                trailing: Text(c.dial, style: TextStyle(color: Colors.grey[500])),
-                onTap: () { setState(() => _country = c); Navigator.pop(context); },
-              )).toList(),
+              children: CountryCode.list
+                  .map(
+                    (c) => ListTile(
+                      leading: Text(
+                        c.flag,
+                        style: const TextStyle(fontSize: 24),
+                      ),
+                      title: Text(c.name),
+                      trailing: Text(
+                        c.dial,
+                        style: TextStyle(color: Colors.grey[500]),
+                      ),
+                      onTap: () {
+                        setState(() => _country = c);
+                        Navigator.pop(context);
+                      },
+                    ),
+                  )
+                  .toList(),
             ),
           ),
         ],
@@ -387,32 +618,71 @@ class _HomeScreenState extends State<HomeScreen> {
           // 顶栏
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            child: Row(children: [
-              CircleAvatar(
-                radius: 16,
-                backgroundColor: Colors.green.withOpacity(0.1),
-                child: Text(p.phone!.substring(p.phone!.length - 2), style: TextStyle(fontSize: 10, color: Colors.green[700])),
-              ),
-              const SizedBox(width: 10),
-              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(p.phone ?? '', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-                Row(children: [
-                  Container(width: 6, height: 6, decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.green)),
-                  const SizedBox(width: 4),
-                  Text('在线', style: TextStyle(fontSize: 11, color: Colors.green[600])),
-                ]),
-              ]),
-              const Spacer(),
-              GestureDetector(
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HistoryScreen())),
-                child: Icon(Icons.history, size: 20, color: Colors.grey[500]),
-              ),
-              const SizedBox(width: 12),
-              GestureDetector(
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen())),
-                child: Icon(Icons.settings, size: 20, color: Colors.grey[500]),
-              ),
-            ]),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 16,
+                  backgroundColor: Colors.green.withOpacity(0.1),
+                  child: Text(
+                    p.phone!.substring(p.phone!.length - 2),
+                    style: TextStyle(fontSize: 10, color: Colors.green[700]),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      p.phone ?? '',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.green,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '在线',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.green[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const Spacer(),
+                GestureDetector(
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const HistoryScreen()),
+                  ),
+                  child: Icon(Icons.history, size: 20, color: Colors.grey[500]),
+                ),
+                const SizedBox(width: 12),
+                GestureDetector(
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                  ),
+                  child: Icon(
+                    Icons.settings,
+                    size: 20,
+                    color: Colors.grey[500],
+                  ),
+                ),
+              ],
+            ),
           ),
           const Divider(height: 1),
 
@@ -422,42 +692,85 @@ class _HomeScreenState extends State<HomeScreen> {
                 ? Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.people_outline, size: 64, color: Colors.grey[200]),
+                      Icon(
+                        Icons.people_outline,
+                        size: 64,
+                        color: Colors.grey[200],
+                      ),
                       const SizedBox(height: 12),
-                      Text('暂无联系人', style: TextStyle(fontSize: 16, color: Colors.grey[400])),
+                      Text(
+                        '暂无联系人',
+                        style: TextStyle(fontSize: 16, color: Colors.grey[400]),
+                      ),
                       const SizedBox(height: 4),
-                      Text('邀请好友或等待对方上线', style: TextStyle(fontSize: 13, color: Colors.grey[300])),
+                      Text(
+                        '邀请好友或等待对方上线',
+                        style: TextStyle(fontSize: 13, color: Colors.grey[300]),
+                      ),
                     ],
                   )
                 : ListView.separated(
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     itemCount: contacts.length + 1,
-                    separatorBuilder: (_, __) => const Divider(height: 1, indent: 72),
+                    separatorBuilder: (_, __) =>
+                        const Divider(height: 1, indent: 72),
                     itemBuilder: (_, i) {
                       if (i == contacts.length) {
                         return ListTile(
                           leading: CircleAvatar(
                             backgroundColor: Colors.green.withOpacity(0.1),
-                            child: const Icon(Icons.person_add_alt, size: 20, color: Colors.green),
+                            child: const Icon(
+                              Icons.person_add_alt,
+                              size: 20,
+                              color: Colors.green,
+                            ),
                           ),
-                          title: const Text('新建通话', style: TextStyle(fontSize: 15, color: Colors.green)),
-                          onTap: () {},
+                          title: const Text(
+                            '新建通话',
+                            style: TextStyle(fontSize: 15, color: Colors.green),
+                          ),
+                          onTap: () => _showDialDialog(context),
                         );
                       }
                       final user = contacts[i];
                       return ListTile(
                         leading: CircleAvatar(
                           backgroundColor: Colors.blue.withOpacity(0.1),
-                          child: Text(user.substring(user.length - 2), style: TextStyle(fontSize: 13, color: Colors.blue[700])),
+                          child: Text(
+                            user.substring(user.length - 2),
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.blue[700],
+                            ),
+                          ),
                         ),
-                        title: Text(user, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
-                        subtitle: Row(children: [
-                          Container(width: 6, height: 6, decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.green)),
-                          const SizedBox(width: 4),
-                          const Text('在线', style: TextStyle(fontSize: 12)),
-                        ]),
+                        title: Text(
+                          user,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        subtitle: Row(
+                          children: [
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: const BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.green,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            const Text('在线', style: TextStyle(fontSize: 12)),
+                          ],
+                        ),
                         trailing: IconButton(
-                          icon: Icon(Icons.phone, color: Colors.green[400], size: 22),
+                          icon: Icon(
+                            Icons.phone,
+                            color: Colors.green[400],
+                            size: 22,
+                          ),
                           onPressed: () {
                             p.call(user);
                             _pushCallScreen(context);
@@ -472,23 +785,69 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _showDialDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        final phoneCtl = TextEditingController();
+        return AlertDialog(
+          title: const Text('输入对方手机号'),
+          content: TextField(
+            controller: phoneCtl,
+            autofocus: true,
+            keyboardType: TextInputType.phone,
+            decoration: const InputDecoration(
+              hintText: '+86 13800138000',
+              prefixIcon: Icon(Icons.phone),
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('取消'),
+            ),
+            FilledButton.icon(
+              onPressed: () {
+                final phone = phoneCtl.text.trim();
+                if (phone.isNotEmpty) {
+                  Navigator.pop(ctx);
+                  context.read<AppProvider>().call(phone);
+                  _pushCallScreen();
+                }
+              },
+              icon: const Icon(Icons.call, size: 16),
+              label: const Text('呼叫'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void _pushCallScreen() {
-    Navigator.push(context, PageRouteBuilder(
-      pageBuilder: (_, __, ___) => const CallScreen(),
-      transitionsBuilder: (_, anim, __, child) => SlideTransition(
-        position: Tween<Offset>(
-          begin: const Offset(0, 1),
-          end: Offset.zero,
-        ).animate(CurvedAnimation(
-          parent: anim,
-          curve: Curves.easeOutCubic,
-        )),
-        child: child,
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (_, __, ___) => const CallScreen(),
+        transitionsBuilder: (_, anim, __, child) => SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0, 1),
+            end: Offset.zero,
+          ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
+          child: child,
+        ),
+        transitionDuration: const Duration(milliseconds: 400),
       ),
-      transitionDuration: const Duration(milliseconds: 400),
-    ));
+    );
   }
 
   @override
-  void dispose() { _phoneCtl.dispose(); _codeCtl.dispose(); _dialCtl.dispose(); _serverCtl.dispose(); super.dispose(); }
+  void dispose() {
+    _phoneCtl.dispose();
+    _codeCtl.dispose();
+    _dialCtl.dispose();
+    _serverCtl.dispose();
+    super.dispose();
+  }
 }

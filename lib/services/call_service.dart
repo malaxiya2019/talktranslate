@@ -44,10 +44,12 @@ class CallService {
   String get mySpeech => _mySpeech;
   String get mySpeechTranslated => _mySpeechTranslated;
 
-  static const ICE = {'iceServers': [
-    {'urls': 'stun:stun.l.google.com:19302'},
-    {'urls': 'stun:stun1.l.google.com:19302'},
-  ]};
+  static const ICE = {
+    'iceServers': [
+      {'urls': 'stun:stun.l.google.com:19302'},
+      {'urls': 'stun:stun1.l.google.com:19302'},
+    ],
+  };
 
   CallService(this._signal) {
     _signal.events.listen((msg) async {
@@ -76,6 +78,7 @@ class CallService {
     switch (newState) {
       case CallState.idle:
       case CallState.failed:
+        _emitCallRecord();
         _cancelAllTimers();
         _cleanupMedia();
         OverlayService().hide();
@@ -83,11 +86,13 @@ class CallService {
         break;
       case CallState.inCall:
         _callStartTime = DateTime.now();
-        OverlayService().prepare(CallSession(
-          peerName: _peerPhone ?? '未知',
-          callId: _callId,
-          startedAt: _callStartTime!,
-        ));
+        OverlayService().prepare(
+          CallSession(
+            peerName: _peerPhone ?? '未知',
+            callId: _callId,
+            startedAt: _callStartTime!,
+          ),
+        );
         ForegroundService().start(_peerPhone ?? '通话中');
         break;
       case CallState.reconnecting:
@@ -117,9 +122,20 @@ class CallService {
       return;
     }
 
-    final delay = Duration(seconds: [
-      1, 2, 4, 8, 16, 30, 30, 30, 30, 30
-    ][_reconnectAttempt.clamp(0, 9)]);
+    final delay = Duration(
+      seconds: [
+        1,
+        2,
+        4,
+        8,
+        16,
+        30,
+        30,
+        30,
+        30,
+        30,
+      ][_reconnectAttempt.clamp(0, 9)],
+    );
 
     _reconnectAttempt++;
     _reconnectTimer = Timer(delay, () async {
@@ -176,16 +192,22 @@ class CallService {
 
   Future<MediaStream> getLocalStream() async {
     if (_localStream != null) return _localStream!;
-    _localStream = await navigator.mediaDevices.getUserMedia({'audio': true, 'video': false});
+    _localStream = await navigator.mediaDevices.getUserMedia({
+      'audio': true,
+      'video': false,
+    });
     return _localStream!;
   }
 
   Future<RTCPeerConnection> createPC() async {
     _pc = await createPeerConnection(ICE, {'sdpSemantics': 'unified-plan'});
-    (await getLocalStream()).getTracks().forEach((t) => _pc?.addTrack(t, _localStream!));
+    (await getLocalStream()).getTracks().forEach(
+      (t) => _pc?.addTrack(t, _localStream!),
+    );
 
     _pc!.onIceCandidate = (c) {
-      if (c != null && _callId.isNotEmpty) _signal.sendIce(_callId, c.toMap(), _peerPhone ?? '');
+      if (c != null && _callId.isNotEmpty)
+        _signal.sendIce(_callId, c.toMap(), _peerPhone ?? '');
     };
     _pc!.onTrack = (e) {
       _remoteStream = e.streams[0];
@@ -279,7 +301,9 @@ class CallService {
 
       case 'offer':
         if (msg['sdp'] == null) break;
-        await _pc?.setRemoteDescription(RTCSessionDescription(msg['sdp'] as String, 'offer'));
+        await _pc?.setRemoteDescription(
+          RTCSessionDescription(msg['sdp'] as String, 'offer'),
+        );
         if (_pc != null) {
           final answer = await _pc!.createAnswer();
           await _pc!.setLocalDescription(answer);
@@ -291,23 +315,34 @@ class CallService {
         break;
 
       case 'answer':
-        await _pc?.setRemoteDescription(RTCSessionDescription(msg['sdp'] as String, 'answer'));
+        await _pc?.setRemoteDescription(
+          RTCSessionDescription(msg['sdp'] as String, 'answer'),
+        );
         break;
 
       case 'ice':
-        if (_pc != null && msg['candidate'] != null && msg['candidate'] is Map) {
+        if (_pc != null &&
+            msg['candidate'] != null &&
+            msg['candidate'] is Map) {
           final c = msg['candidate'] as Map;
-          await _pc!.addCandidate(RTCIceCandidate(
-            (c['candidate'] as String?) ?? '',
-            (c['sdpMid'] as String?) ?? '',
-            (c['sdpMLineIndex'] as int?) ?? 0));
+          await _pc!.addCandidate(
+            RTCIceCandidate(
+              (c['candidate'] as String?) ?? '',
+              (c['sdpMid'] as String?) ?? '',
+              (c['sdpMLineIndex'] as int?) ?? 0,
+            ),
+          );
         }
         break;
 
       case 'subtitle':
         _subtitle = msg['text'] as String;
         _subtitleTranslated = (msg['translated'] as String?) ?? '';
-        _events.add({'type': 'subtitle', 'text': _subtitle, 'translated': _subtitleTranslated});
+        _events.add({
+          'type': 'subtitle',
+          'text': _subtitle,
+          'translated': _subtitleTranslated,
+        });
         OverlayService().updateSubtitle(_subtitle, _subtitleTranslated);
         if (_subtitleTranslated.isNotEmpty) {
           pipeline.speak(_subtitleTranslated);
@@ -361,7 +396,9 @@ class CallService {
     _events.add({
       'type': 'snapshot',
       'snapshot': CallSnapshot(
-        sessionId: _callId.isNotEmpty ? _callId : DateTime.now().millisecondsSinceEpoch.toString(),
+        sessionId: _callId.isNotEmpty
+            ? _callId
+            : DateTime.now().millisecondsSinceEpoch.toString(),
         state: state,
         peerId: _peerPhone!,
         timestamp: DateTime.now(),
@@ -396,12 +433,17 @@ class CallService {
 
   void _cleanupMedia() {
     pipeline.stop();
-    _pc?.close(); _pc = null;
-    _localStream?.getTracks().forEach((t) => t.stop()); _localStream = null;
+    _pc?.close();
+    _pc = null;
+    _localStream?.getTracks().forEach((t) => t.stop());
+    _localStream = null;
     _remoteStream = null;
-    _subtitle = ''; _subtitleTranslated = '';
-    _mySpeech = ''; _mySpeechTranslated = '';
-    _callId = ''; _peerPhone = null;
+    _subtitle = '';
+    _subtitleTranslated = '';
+    _mySpeech = '';
+    _mySpeechTranslated = '';
+    _callId = '';
+    _peerPhone = null;
   }
 
   /// 本端语音识别结果 → 更新字幕 + 发送给对面

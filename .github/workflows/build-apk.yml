@@ -3,6 +3,8 @@ name: Build TalkTranslate
 on:
   push:
     branches: [main, release]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
     inputs:
       build_type:
@@ -16,7 +18,28 @@ on:
           - both
 
 jobs:
+  # 代码质量检查 — 快速反馈
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.29.2'
+          channel: 'stable'
+          architecture: x64
+
+      - name: Get packages
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+  # APK/AAB 构建
   build:
+    needs: analyze
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

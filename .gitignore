@@ -44,3 +44,9 @@ Thumbs.db
 
 # 日志
 *.log
+
+# Server
+server/node_modules/
+server/test.cjs
+server/*.cjs
+android/app/keystore_b64.txt
