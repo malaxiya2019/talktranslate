@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
 import 'call_screen.dart';
+import 'settings_screen.dart';
+import 'history_screen.dart';
 
 /// 国家代码
 class CountryCode {
@@ -401,9 +403,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 ]),
               ]),
               const Spacer(),
-              Icon(Icons.search, size: 20, color: Colors.grey[500]),
-              const SizedBox(width: 16),
-              Icon(Icons.more_vert, size: 20, color: Colors.grey[500]),
+              GestureDetector(
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HistoryScreen())),
+                child: Icon(Icons.history, size: 20, color: Colors.grey[500]),
+              ),
+              const SizedBox(width: 12),
+              GestureDetector(
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen())),
+                child: Icon(Icons.settings, size: 20, color: Colors.grey[500]),
+              ),
             ]),
           ),
           const Divider(height: 1),
@@ -452,7 +460,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           icon: Icon(Icons.phone, color: Colors.green[400], size: 22),
                           onPressed: () {
                             p.call(user);
-                            Navigator.push(context, MaterialPageRoute(builder: (_) => const CallScreen()));
+                            _pushCallScreen(context);
                           },
                         ),
                       );
@@ -462,6 +470,23 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
     );
+  }
+
+  void _pushCallScreen() {
+    Navigator.push(context, PageRouteBuilder(
+      pageBuilder: (_, __, ___) => const CallScreen(),
+      transitionsBuilder: (_, anim, __, child) => SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(0, 1),
+          end: Offset.zero,
+        ).animate(CurvedAnimation(
+          parent: anim,
+          curve: Curves.easeOutCubic,
+        )),
+        child: child,
+      ),
+      transitionDuration: const Duration(milliseconds: 400),
+    ));
   }
 
   @override

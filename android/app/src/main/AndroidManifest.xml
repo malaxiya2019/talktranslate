@@ -1,0 +1,69 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.talktranslate.talktranslate">
+
+    <!-- 悬浮窗覆盖权限 (Android 6+) -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
+    <!-- 前台服务 (保活) -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_COMMUNICATION"/>
+    <!-- 通知 (前台服务必需) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- 互联网 -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- 录音 (WebRTC 通话) -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <!-- 网络状态 (WebRTC) -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+
+    <application
+        android:label="TalkTranslate"
+        android:name="${applicationName}"
+        android:icon="@mipmap/ic_launcher">
+
+        <!-- 主 Activity -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:taskAffinity=""
+            android:theme="@style/LaunchTheme"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+            android:hardwareAccelerated="true"
+            android:windowSoftInputMode="adjustResize">
+            <meta-data
+                android:name="io.flutter.embedding.android.NormalTheme"
+                android:resource="@style/NormalTheme"/>
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+
+        <!-- 前台服务 — 通话保活 -->
+        <service
+            android:name=".CallForegroundService"
+            android:exported="false"
+            android:foregroundServiceType="mediaProjection|camera"/>
+
+        <!-- 悬浮窗前台服务 -->
+        <service
+            android:name=".OverlayService"
+            android:exported="false"
+            android:foregroundServiceType="mediaProjection"/>
+
+        <!-- 悬浮窗独立 Flutter 引擎 Activity -->
+        <activity
+            android:name="com.xiaohao.overlay_window.FlutterOverlayWindow"
+            android:theme="@style/Theme.AppCompat.NoActionBar"
+            android:taskAffinity=""
+            android:excludeFromRecents="true"
+            android:enableOnBackInvokedCallback="false"
+            android:showWhenLocked="false"
+            android:turnScreenOn="false"/>
+
+        <!-- 前台服务通知渠道 (Android 8+) -->
+        <meta-data
+            android:name="flutterEmbedding"
+            android:value="2"/>
+    </application>
+</manifest>

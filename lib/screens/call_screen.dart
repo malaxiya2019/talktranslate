@@ -3,31 +3,61 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/call.dart';
 import '../providers/app_provider.dart';
+import '../widgets/common/avatar.dart';
+import '../widgets/common/glass_container.dart';
+import '../widgets/call/call_status_chip.dart';
+import '../widgets/call/call_actions_bar.dart';
+import '../widgets/call/call_timer.dart';
+import '../widgets/chat/message_bubble.dart';
+import '../widgets/chat/translation_card.dart';
 
-/// 通话页面 — 产品级
+/// 通话页面 — Selector 局部绑定，防 rebuild 风暴
 class CallScreen extends StatefulWidget {
   const CallScreen({super.key});
   @override
   State<CallScreen> createState() => _CallScreenState();
 }
 
-class _CallScreenState extends State<CallScreen> with WidgetsBindingObserver {
+class _CallScreenState extends State<CallScreen>
+    with WidgetsBindingObserver, SingleTickerProviderStateMixin {
   Timer? _timer;
   int _elapsed = 0;
   bool _muted = false;
   bool _speaker = false;
 
+  late final AnimationController _exitCtrl;
+  late final Animation<double> _exitScale;
+  late final Animation<double> _exitFade;
+  bool _exiting = false;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _exitCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 250),
+    );
+    _exitScale = Tween<double>(begin: 1.0, end: 0.85).animate(
+      CurvedAnimation(parent: _exitCtrl, curve: Curves.easeInCubic),
+    );
+    _exitFade = Tween<double>(begin: 1.0, end: 0.0).animate(
+      CurvedAnimation(parent: _exitCtrl, curve: Curves.easeIn),
+    );
   }
 
   @override
   void dispose() {
     _timer?.cancel();
+    _exitCtrl.dispose();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  Future<void> _animateExit() async {
+    setState(() => _exiting = true);
+    _exitCtrl.forward();
+    await Future.delayed(const Duration(milliseconds: 250));
   }
 
   void _startTimer() {
@@ -36,101 +66,222 @@ class _CallScreenState extends State<CallScreen> with WidgetsBindingObserver {
     });
   }
 
-  String _fmtTime(int s) {
-    final m = (s ~/ 60).toString().padLeft(2, '0');
-    final sec = (s % 60).toString().padLeft(2, '0');
-    return '$m:$sec';
+  void _onAction(ActionType type) {
+    final p = context.read<AppProvider>();
+    switch (type) {
+      case ActionType.minimize:
+        p.enterBackgroundMode();
+        if (mounted) Navigator.pop(context);
+        break;
+      case ActionType.mute:
+        setState(() => _muted = !_muted);
+        break;
+      case ActionType.speaker:
+        setState(() => _speaker = !_speaker);
+        break;
+      case ActionType.hangup:
+        _animateExit().then((_) {
+          p.hangup();
+          if (mounted) Navigator.pop(context);
+        });
+        break;
+      case ActionType.answer:
+        p.accept();
+        break;
+      case ActionType.reject:
+        p.reject();
+        if (mounted) Navigator.pop(context);
+        break;
+    }
   }
+
+  // ── 主构建：仅 CallState 变化时触发 ──
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF0D0D0D),
-      body: Consumer<AppProvider>(
-        builder: (context, p, _) {
-          final status = p.callStatus;
-          if (status == CallStatus.connected && _timer == null) _startTimer();
-          if (status == CallStatus.idle) {
-            WidgetsBinding.instance.addPostFrameCallback((_) => Navigator.pop(context));
-          }
-
-          return SafeArea(
-            child: Column(
-              children: [
-                // 顶部栏
-                _buildTopBar(p, status),
-                const Divider(color: Colors.white12, height: 1),
-
-                Expanded(child: _buildBody(p, status)),
-
-                // 底部控制
-                _buildControls(p, status),
-              ],
+      body: _exiting
+          ? FadeTransition(
+              opacity: _exitFade,
+              child: ScaleTransition(
+                scale: _exitScale,
+                child: Selector<AppProvider, CallState>(
+                  selector: (_, p) => p.callState,
+                  builder: (context, st, _) {
+                    if (st == CallState.inCall && _timer == null) _startTimer();
+                    if (st == CallState.idle) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) => Navigator.pop(context));
+                    }
+                    return SafeArea(child: _buildSwipeableBody(st));
+                  },
+                ),
+              ),
+            )
+          : Selector<AppProvider, CallState>(
+              selector: (_, p) => p.callState,
+              builder: (context, st, _) {
+                if (st == CallState.inCall && _timer == null) _startTimer();
+                if (st == CallState.idle) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) => Navigator.pop(context));
+                }
+                return SafeArea(child: _buildSwipeableBody(st));
+              },
             ),
-          );
-        },
+      );
+
+  // ── 下滑挂断手势 ──
+
+  Widget _buildSwipeableBody(CallState st) {
+    return GestureDetector(
+      onVerticalDragEnd: (details) {
+        if (details.primaryVelocity != null && details.primaryVelocity! > 800) {
+          _onAction(ActionType.hangup);
+        }
+      },
+      child: Stack(
+        children: [
+          Column(
+            children: [
+              if (st == CallState.inCall)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Container(
+                    width: 36, height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+              _buildTopBar(st),
+              const Divider(color: Colors.white12, height: 1),
+              Expanded(child: _buildBody(st)),
+              CallActionsBar(
+                muted: _muted,
+            speakerOn: _speaker,
+            ringingMode: st == CallState.ringing,
+            onAction: _onAction,
+          ),
+        ],
+          // reconnecting 覆盖层
+          if (st == CallState.reconnecting)
+            Positioned(
+              top: 0, left: 0, right: 0,
+              child: _buildReconnectingBanner(),
+            ),
       ),
     );
   }
 
-  Widget _buildTopBar(AppProvider p, CallStatus status) {
+  // ── 顶部栏（CallState Selector 驱动）──
+
+  Widget _buildTopBar(CallState st) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Row(
         children: [
-          // 状态
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(
-              color: status == CallStatus.connected ? Colors.green.withOpacity(0.15) : Colors.orange.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              Icon(
-                status == CallStatus.connected ? Icons.mic : Icons.phone,
-                size: 12, color: status == CallStatus.connected ? Colors.greenAccent : Colors.orange,
-              ),
-              const SizedBox(width: 4),
-              Text(
-                status == CallStatus.calling ? '呼叫中' : status == CallStatus.ringing ? '响铃中' : status == CallStatus.connected ? '通话中' : '',
-                style: TextStyle(fontSize: 11, color: status == CallStatus.connected ? Colors.greenAccent : Colors.orange),
-              ),
-            ]),
-          ),
+          CallStatusChip(state: st),
           const Spacer(),
-          if (status == CallStatus.connected)
-            Text(_fmtTime(_elapsed), style: const TextStyle(color: Colors.white54, fontSize: 13, fontFamily: 'monospace')),
+          if (st == CallState.inCall) CallTimer(elapsed: _elapsed),
         ],
       ),
     );
   }
 
-  Widget _buildBody(AppProvider p, CallStatus status) {
-    if (status == CallStatus.calling || status == CallStatus.ringing) {
-      return Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          CircleAvatar(
-            radius: 44,
-            backgroundColor: Colors.white.withOpacity(0.05),
-            child: Text(
-              (p.peerPhone ?? '?').substring((p.peerPhone?.length ?? 1) - 2),
-              style: const TextStyle(fontSize: 28, color: Colors.white70),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(p.peerPhone ?? '', style: const TextStyle(fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          Text(status == CallStatus.calling ? '正在呼叫...' : '响铃中...',
-              style: const TextStyle(fontSize: 15, color: Colors.white38)),
-        ],
-      );
-    }
+  // ── 主体：AnimatedSwitcher 过渡 ──
 
-    // ── 通话中: 核心翻译界面 ──
+  Widget _buildBody(CallState st) {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 400),
+      transitionBuilder: (child, anim) => FadeTransition(
+        opacity: anim,
+        child: ScaleTransition(
+          scale: Tween<double>(begin: 0.95, end: 1.0).animate(
+            CurvedAnimation(parent: anim, curve: Curves.easeOutCubic),
+          ),
+          child: child,
+        ),
+      ),
+      child: st == CallState.connecting || st == CallState.ringing
+          ? _buildRingingView(st)
+          : _buildInCallView(),
+    );
+  }
+
+  // ── 重连提示横幅 ──
+
+  Widget _buildReconnectingBanner() {
+    return Material(
+      color: Colors.transparent,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Colors.orange.withOpacity(0.2),
+              Colors.orange.withOpacity(0.05),
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(
+              width: 14, height: 14,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.orangeAccent),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              '网络不稳定，正在重连...',
+              style: TextStyle(fontSize: 13, color: Colors.orangeAccent[200]),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── 响铃/连接页 ──
+
+  Widget _buildRingingView(CallState st) {
     return Column(
+      key: const ValueKey('ringing'),
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        // 对方信息 + 语言对
+        // peerPhone 单独 Selector
+        Selector<AppProvider, String>(
+          selector: (_, p) => p.peerPhone ?? '',
+          builder: (_, phone, __) => Avatar(name: phone.isNotEmpty ? phone : '?', size: 88, online: false),
+        ),
+        const SizedBox(height: 16),
+        Selector<AppProvider, String>(
+          selector: (_, p) => p.peerPhone ?? '',
+          builder: (_, phone, __) => Text(
+            phone,
+            style: const TextStyle(fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          st == CallState.connecting ? '正在呼叫...' : '响铃中...',
+          style: const TextStyle(fontSize: 15, color: Colors.white38),
+        ),
+      ],
+    );
+  }
+
+  // ── 通话中：翻译界面（subtitle/mySpeech 各自 Selector）──
+
+  Widget _buildInCallView() {
+    return Column(
+      key: const ValueKey('inCall'),
+      children: [
         const SizedBox(height: 12),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -144,56 +295,31 @@ class _CallScreenState extends State<CallScreen> with WidgetsBindingObserver {
           ],
         ),
         const SizedBox(height: 4),
-        Text(p.peerPhone ?? '', style: const TextStyle(fontSize: 16, color: Colors.white54)),
+        Selector<AppProvider, String>(
+          selector: (_, p) => p.peerPhone ?? '',
+          builder: (_, phone, __) => Text(phone, style: const TextStyle(fontSize: 16, color: Colors.white54)),
+        ),
         const SizedBox(height: 16),
 
-        // 对方字幕
+        // 对方字幕（subtitle 独立 Selector）
         Expanded(
-          child: Container(
+          child: GlassContainer(
             margin: const EdgeInsets.symmetric(horizontal: 16),
             padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.04),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white.withOpacity(0.06)),
-            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(children: [
-                  Icon(Icons.person_outline, size: 14, color: Colors.orangeAccent),
-                  const SizedBox(width: 6),
-                  Text('对方', style: TextStyle(color: Colors.orangeAccent, fontSize: 12)),
-                ]),
-                const SizedBox(height: 12),
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          p.subtitle.isEmpty ? '等待对方说话...' : p.subtitle,
-                          style: TextStyle(
-                            fontSize: p.subtitle.length > 30 ? 20 : 24,
-                            color: Colors.white,
-                            fontWeight: FontWeight.w500,
-                            height: 1.4,
-                          ),
-                        ),
-                        if (p.subtitleTranslated.isNotEmpty) ...[
-                          const SizedBox(height: 10),
-                          Text(
-                            p.subtitleTranslated,
-                            style: TextStyle(
-                              fontSize: p.subtitleTranslated.length > 30 ? 18 : 22,
-                              color: Colors.greenAccent[100],
-                              fontWeight: FontWeight.bold,
-                              height: 1.4,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
+                Selector<AppProvider, String>(
+                  selector: (_, p) => p.subtitle,
+                  builder: (_, text, __) => MessageBubble(
+                    speaker: Speaker.peer, text: text, color: Colors.orangeAccent, fontSize: 20,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Selector<AppProvider, String>(
+                  selector: (_, p) => p.subtitleTranslated,
+                  builder: (_, translated, __) => TranslationCard(
+                    original: '', translated: translated, translatedFontSize: 22,
                   ),
                 ),
               ],
@@ -203,116 +329,34 @@ class _CallScreenState extends State<CallScreen> with WidgetsBindingObserver {
 
         const SizedBox(height: 8),
 
-        // 我的字幕
+        // 我的字幕（mySpeech 独立 Selector）
         Expanded(
-          child: Container(
+          child: GlassContainer(
             margin: const EdgeInsets.symmetric(horizontal: 16),
             padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.02),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white.withOpacity(0.04)),
-            ),
+            borderColor: Colors.white.withOpacity(0.04),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(children: [
-                  Icon(Icons.person, size: 14, color: Colors.blue[300]),
-                  const SizedBox(width: 6),
-                  Text('我', style: TextStyle(color: Colors.blue[300], fontSize: 12)),
-                ]),
-                const SizedBox(height: 12),
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          p.mySpeech.isEmpty ? '请说话...' : p.mySpeech,
-                          style: TextStyle(fontSize: 18, color: Colors.white60, height: 1.4),
-                        ),
-                        if (p.mySpeechTranslated.isNotEmpty) ...[
-                          const SizedBox(height: 8),
-                          Text(
-                            p.mySpeechTranslated,
-                            style: TextStyle(fontSize: 16, color: Colors.greenAccent[100]?.withOpacity(0.7), height: 1.4),
-                          ),
-                        ],
-                      ],
-                    ),
+                Selector<AppProvider, String>(
+                  selector: (_, p) => p.mySpeech,
+                  builder: (_, text, __) => MessageBubble(
+                    speaker: Speaker.me, text: text, color: Colors.blue[300]!, fontSize: 18,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Selector<AppProvider, String>(
+                  selector: (_, p) => p.mySpeechTranslated,
+                  builder: (_, translated, __) => TranslationCard(
+                    original: '', translated: translated, originalFontSize: 16, translatedFontSize: 16,
                   ),
                 ),
               ],
             ),
           ),
         ),
-
         const SizedBox(height: 8),
       ],
-    );
-  }
-
-  Widget _buildControls(AppProvider p, CallStatus status) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          if (status == CallStatus.calling || status == CallStatus.connected) ...[
-            // 静音
-            _CtrlBtn(
-              icon: _muted ? Icons.mic_off : Icons.mic,
-              color: _muted ? Colors.red : Colors.white38,
-              label: '静音',
-              onTap: () => setState(() => _muted = !_muted),
-            ),
-
-            // 挂断
-            _CtrlBtn(
-              icon: Icons.call_end,
-              color: Colors.red,
-              label: '挂断',
-              size: 52,
-              onTap: () { p.hangup(); Navigator.pop(context); },
-            ),
-
-            // 扬声器
-            _CtrlBtn(
-              icon: _speaker ? Icons.volume_up : Icons.hearing,
-              color: _speaker ? Colors.blue : Colors.white38,
-              label: '扬声器',
-              onTap: () => setState(() => _speaker = !_speaker),
-            ),
-          ],
-
-          if (status == CallStatus.ringing) ...[
-            _CtrlBtn(icon: Icons.call, color: Colors.green, label: '接听', size: 52, onTap: () => p.accept()),
-            const SizedBox(width: 48),
-            _CtrlBtn(icon: Icons.call_end, color: Colors.red, label: '拒接', size: 52, onTap: () { p.reject(); Navigator.pop(context); }),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _CtrlBtn extends StatelessWidget {
-  final IconData icon; final Color color; final String label; final double size; final VoidCallback onTap;
-  const _CtrlBtn({required this.icon, required this.color, required this.label, this.size = 44, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(mainAxisSize: MainAxisSize.min, children: [
-        Container(
-          width: size, height: size,
-          decoration: BoxDecoration(color: color.withOpacity(0.15), shape: BoxShape.circle),
-          child: Icon(icon, color: color, size: size * 0.45),
-        ),
-        const SizedBox(height: 4),
-        Text(label, style: TextStyle(color: Colors.white38, fontSize: 11)),
-      ]),
     );
   }
 }

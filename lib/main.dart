@@ -3,17 +3,21 @@ import 'package:provider/provider.dart';
 import 'providers/app_provider.dart';
 import 'screens/home_screen.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const TalkTranslateApp());
+  final appProvider = AppProvider();
+  await appProvider.init();
+  runApp(TalkTranslateApp(provider: appProvider));
 }
 
 class TalkTranslateApp extends StatelessWidget {
-  const TalkTranslateApp({super.key});
+  final AppProvider provider;
+  const TalkTranslateApp({super.key, required this.provider});
+
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => AppProvider(),
+    return ChangeNotifierProvider.value(
+      value: provider,
       child: MaterialApp(
         title: 'TalkTranslate',
         debugShowCheckedModeBanner: false,

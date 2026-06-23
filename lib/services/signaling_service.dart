@@ -5,12 +5,14 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 class SignalingService {
   WebSocketChannel? _channel;
   String? _phone;
+  String? _serverUrl;
   final _events = StreamController<Map<String, dynamic>>.broadcast();
   Stream<Map<String, dynamic>> get events => _events.stream;
 
   bool get connected => _channel != null;
 
   Future<void> connect(String url, String phone) async {
+    _serverUrl = url;
     _phone = phone;
     try {
       _channel = WebSocketChannel.connect(Uri.parse(url));
@@ -43,5 +45,17 @@ class SignalingService {
   void disconnect() {
     _channel?.sink.close();
     _channel = null;
+  }
+
+  /// 断线重连 — 用上次的地址和手机号重新连接
+  Future<bool> reconnect() async {
+    if (_serverUrl == null || _phone == null) return false;
+    disconnect();
+    try {
+      await connect(_serverUrl!, _phone!);
+      return _channel != null;
+    } catch (_) {
+      return false;
+    }
   }
 }
