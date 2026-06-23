@@ -36,6 +36,7 @@ ios/build/
 *.p12
 api_key.txt
 android/key.properties
+*.jks
 
 # 系统文件
 .DS_Store
