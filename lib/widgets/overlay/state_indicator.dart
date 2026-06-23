@@ -106,11 +106,11 @@ class _StateIndicatorState extends State<StateIndicator>
             width: 8,
             height: 8,
             decoration: BoxDecoration(
-              color: _color.withOpacity(_pulseAnim.value),
+              color: _color.withValues(alpha: _pulseAnim.value),
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: _color.withOpacity(0.3 * _pulseAnim.value),
+                  color: _color.withValues(alpha: 0.3 * _pulseAnim.value),
                   blurRadius: 4,
                   spreadRadius: 1,
                 ),

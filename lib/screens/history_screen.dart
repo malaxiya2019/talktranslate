@@ -52,7 +52,7 @@ class _CallRecordTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       leading: CircleAvatar(
-        backgroundColor: Colors.blue.withOpacity(0.1),
+        backgroundColor: Colors.blue.withValues(alpha: 0.1),
         child: Text(
           record.peerName.substring((record.peerName.length - 2).clamp(0, record.peerName.length)),
           style: TextStyle(fontSize: 13, color: Colors.blue[700]),

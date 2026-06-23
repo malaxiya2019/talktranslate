@@ -27,7 +27,7 @@ class _CallActionButton extends StatelessWidget {
             width: size,
             height: size,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.15),
+              color: color.withValues(alpha: 0.15),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, color: color, size: size * 0.45),

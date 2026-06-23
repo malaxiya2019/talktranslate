@@ -161,7 +161,7 @@ class CallService {
   Future<void> _restartIce() async {
     if (_pc == null) return;
     try {
-      final offer = await _pc!.createOffer(offerToReceiveAudio: true);
+      final offer = await _pc!.createOffer({'offerToReceiveAudio': true});
       await _pc!.setLocalDescription(offer);
       _signal.sendOffer(_callId, offer.sdp ?? '');
     } catch (e) {
@@ -206,7 +206,7 @@ class CallService {
     );
 
     _pc!.onIceCandidate = (c) {
-      if (c != null && _callId.isNotEmpty)
+      if (_callId.isNotEmpty)
         _signal.sendIce(_callId, c.toMap(), _peerPhone ?? '');
     };
     _pc!.onTrack = (e) {
@@ -250,7 +250,7 @@ class CallService {
     try {
       await getLocalStream();
       _pc = await createPC();
-      final offer = await _pc!.createOffer();
+      final offer = await _pc!.createOffer({'offerToReceiveAudio': true, 'offerToReceiveVideo': false});
       await _pc!.setLocalDescription(offer);
       _signal.sendOffer(_callId, offer.sdp ?? '');
       pipeline.start();
@@ -288,7 +288,7 @@ class CallService {
           _stateMachine.transition(CallState.inCall);
         }
         if (_pc != null) {
-          final offer = await _pc!.createOffer();
+          final offer = await _pc!.createOffer({'offerToReceiveAudio': true, 'offerToReceiveVideo': false});
           await _pc!.setLocalDescription(offer);
           _signal.sendOffer(_callId, offer.sdp ?? '');
         }

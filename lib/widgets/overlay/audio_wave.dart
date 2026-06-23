@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import '../../models/call.dart';
 
 /// 音频波形动画 — 通话中自动跳动，模拟实时音频感
 ///
@@ -52,7 +51,7 @@ class _AudioWaveState extends State<AudioWave> with TickerProviderStateMixin {
   }
 
   void _startWave() {
-    _timer = Timer.periodic(const Duration(milliseconds: 600), () {
+    _timer = Timer.periodic(const Duration(milliseconds: 600), (_) {
       for (final c in _controllers) {
         if (c.isAnimating) continue;
         c.forward().then((_) => c.reverse());
@@ -95,7 +94,7 @@ class _AudioWaveState extends State<AudioWave> with TickerProviderStateMixin {
               width: 3,
               height: 4,
               decoration: BoxDecoration(
-                color: widget.barColor.withOpacity(0.2),
+                color: widget.barColor.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(2),
               ),
             );
@@ -106,7 +105,7 @@ class _AudioWaveState extends State<AudioWave> with TickerProviderStateMixin {
               width: 3,
               height: 4 + 14 * _animations[i].value,
               decoration: BoxDecoration(
-                color: widget.barColor.withOpacity(0.4 + 0.6 * _animations[i].value),
+                color: widget.barColor.withValues(alpha: 0.4 + 0.6 * _animations[i].value),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),

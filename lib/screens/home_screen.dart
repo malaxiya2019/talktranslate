@@ -224,7 +224,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 width: 72,
                 height: 72,
                 decoration: BoxDecoration(
-                  color: Colors.blue.withOpacity(0.1),
+                  color: Colors.blue.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(18),
                 ),
                 child: const Icon(
@@ -371,7 +371,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       }
                     },
                     style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: Colors.blue.withOpacity(0.3)),
+                      side: BorderSide(color: Colors.blue.withValues(alpha: 0.3)),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
@@ -622,7 +622,7 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 CircleAvatar(
                   radius: 16,
-                  backgroundColor: Colors.green.withOpacity(0.1),
+                  backgroundColor: Colors.green.withValues(alpha: 0.1),
                   child: Text(
                     p.phone!.substring(p.phone!.length - 2),
                     style: TextStyle(fontSize: 10, color: Colors.green[700]),
@@ -718,7 +718,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       if (i == contacts.length) {
                         return ListTile(
                           leading: CircleAvatar(
-                            backgroundColor: Colors.green.withOpacity(0.1),
+                            backgroundColor: Colors.green.withValues(alpha: 0.1),
                             child: const Icon(
                               Icons.person_add_alt,
                               size: 20,
@@ -735,7 +735,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       final user = contacts[i];
                       return ListTile(
                         leading: CircleAvatar(
-                          backgroundColor: Colors.blue.withOpacity(0.1),
+                          backgroundColor: Colors.blue.withValues(alpha: 0.1),
                           child: Text(
                             user.substring(user.length - 2),
                             style: TextStyle(
@@ -773,7 +773,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           onPressed: () {
                             p.call(user);
-                            _pushCallScreen(context);
+                            _pushCallScreen();
                           },
                         ),
                       );

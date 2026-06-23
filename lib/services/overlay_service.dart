@@ -69,9 +69,7 @@ class OverlayService {
     try {
       await FlutterOverlayWindow.requestPermission();
       await FlutterOverlayWindow.showOverlay(
-        overlayTag: "overlay",
         enableDrag: true,
-        flag: FlutterOverlayWindow.defaultFlag,
       );
       _active = true;
       _listen();

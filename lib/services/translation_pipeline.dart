@@ -104,9 +104,11 @@ class TranslationPipeline {
           text = r.recognizedWords;
           if (r.finalResult && !completer.isCompleted) completer.complete();
         },
-        localeId: _sttLocale(_myLang),
-        cancelOnError: true,
-        partialResults: true,
+        listenOptions: SpeechListenOptions(
+          localeId: _sttLocale(_myLang),
+          cancelOnError: true,
+          partialResults: true,
+        ),
       );
 
       await Future.any([
