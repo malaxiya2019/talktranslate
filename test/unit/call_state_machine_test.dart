@@ -214,11 +214,12 @@ void main() {
   });
 
   group('状态变更流', () {
-    test('transition 发出事件', () {
+    test('transition 发出事件', () async {
       final events = <CallState>[];
       final sub = machine.onStateChange.listen(events.add);
       machine.transition(CallState.connecting);
       machine.transition(CallState.inCall);
+      await Future.delayed(Duration.zero);
       expect(events, [CallState.connecting, CallState.inCall]);
       sub.cancel();
     });
@@ -231,11 +232,12 @@ void main() {
       sub.cancel();
     });
 
-    test('reset 发出 idle 事件', () {
+    test('reset 发出 idle 事件', () async {
       final events = <CallState>[];
       final sub = machine.onStateChange.listen(events.add);
       machine.transition(CallState.connecting);
       machine.reset();
+      await Future.delayed(Duration.zero);
       expect(events.last, CallState.idle);
       sub.cancel();
     });
