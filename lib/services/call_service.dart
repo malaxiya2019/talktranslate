@@ -6,6 +6,7 @@ import 'overlay_service.dart';
 import 'call_state_machine.dart';
 import 'translation_pipeline.dart';
 import 'foreground_service.dart';
+import 'audio_focus_manager.dart';
 
 /// 通话协调层 — 组装 WebRTC + 信令 + 状态机 + 翻译管道
 ///
@@ -33,6 +34,7 @@ class CallService {
 
   MediaStream? get remoteStream => _remoteStream;
   String? get peerPhone => _peerPhone;
+  int get pingMs => _signal.lastPingMs;
 
   // 字幕（UI 直接读）
   String _subtitle = '';
@@ -82,6 +84,8 @@ class CallService {
         _cancelAllTimers();
         _cleanupMedia();
         OverlayService().hide();
+        _signal.stopPing();
+        AudioFocusManager().abandonFocus();
         ForegroundService().stop();
         break;
       case CallState.inCall:
@@ -93,6 +97,8 @@ class CallService {
             startedAt: _callStartTime!,
           ),
         );
+        _signal.startPing();
+        AudioFocusManager().requestFocus();
         ForegroundService().start(_peerPhone ?? '通话中');
         break;
       case CallState.reconnecting:

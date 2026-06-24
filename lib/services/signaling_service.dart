@@ -11,13 +11,47 @@ class SignalingService {
 
   bool get connected => _channel != null;
 
+  // ── Ping 检测 ──
+  Timer? _pingTimer;
+  int _lastPingMs = 0;
+  int get lastPingMs => _lastPingMs;
+  DateTime? _pingSentAt;
+
+  void startPing() {
+    _pingTimer?.cancel();
+    _pingTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      _pingSentAt = DateTime.now();
+      send({'type': 'ping', 'time': _pingSentAt!.millisecondsSinceEpoch});
+    });
+  }
+
+  void stopPing() {
+    _pingTimer?.cancel();
+    _pingTimer = null;
+  }
+
+  void _handlePong(Map<String, dynamic> msg) {
+    if (_pingSentAt != null) {
+      _lastPingMs = DateTime.now().difference(_pingSentAt!).inMilliseconds;
+      _events.add({'type': 'pong', 'pingMs': _lastPingMs});
+      _pingSentAt = null;
+    }
+  }
+
   Future<void> connect(String url, String phone) async {
     _serverUrl = url;
     _phone = phone;
     try {
       _channel = WebSocketChannel.connect(Uri.parse(url));
       _channel!.stream.listen(
-        (data) => _events.add(jsonDecode(data as String)),
+        (data) {
+          final msg = jsonDecode(data as String) as Map<String, dynamic>;
+          if (msg['type'] == 'pong') {
+            _handlePong(msg);
+          } else {
+            _events.add(msg);
+          }
+        },
         onError: (e) {
           _channel = null;
           _events.add({'type': 'error', 'message': '信令连接异常: $e'});

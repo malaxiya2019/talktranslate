@@ -227,6 +227,7 @@ class AppProvider extends ChangeNotifier {
   String get subtitleTranslated => callService.subtitleTranslated;
   String get mySpeech => callService.mySpeech;
   String get mySpeechTranslated => callService.mySpeechTranslated;
+  int get pingMs => callService.pingMs;
 
   void enterBackgroundMode() => callService.enterBackgroundMode();
 

@@ -193,7 +193,13 @@ class _CallScreenState extends State<CallScreen>
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Row(
         children: [
-          ConnectionStatusCard(state: st, pingMs: st == CallState.inCall ? _elapsed % 50 + 10 : null),
+          Selector<AppProvider, int>(
+            selector: (_, p) => p.pingMs,
+            builder: (_, ping, __) => ConnectionStatusCard(
+              state: st,
+              pingMs: st == CallState.inCall ? ping : null,
+            ),
+          ),
           const Spacer(),
           if (st == CallState.inCall) CallTimer(elapsed: _elapsed),
         ],

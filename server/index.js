@@ -55,6 +55,10 @@ wss.on("connection", (ws) => {
     try { msg = JSON.parse(raw.toString()); } catch { return send(ws, { type: "error", message: "无效JSON" }); }
 
     switch (msg.type) {
+      // ── Ping/Pong ──
+      case "ping":
+        send(ws, { type: "pong", time: msg.time, serverTime: Date.now() });
+        break;
       // ── 注册 ──
       case "register":
         phone = msg.phone;
