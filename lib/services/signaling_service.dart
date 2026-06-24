@@ -41,11 +41,15 @@ class SignalingService {
   Future<void> connect(String url, String phone) async {
     _serverUrl = url;
     _phone = phone;
+    final connected = Completer<void>();
     try {
       _channel = WebSocketChannel.connect(Uri.parse(url));
       _channel!.stream.listen(
         (data) {
           final msg = jsonDecode(data as String) as Map<String, dynamic>;
+          if (msg['type'] == 'registered' && !connected.isCompleted) {
+            connected.complete();
+          }
           if (msg['type'] == 'pong') {
             _handlePong(msg);
           } else {
@@ -54,17 +58,23 @@ class SignalingService {
         },
         onError: (e) {
           _channel = null;
+          if (!connected.isCompleted) connected.completeError(e);
           _events.add({'type': 'error', 'message': '信令连接异常: $e'});
         },
         onDone: () {
           _channel = null;
+          if (!connected.isCompleted) connected.complete();
           _events.add({'type': 'disconnected'});
         },
         cancelOnError: false,
       );
-      await Future.delayed(const Duration(milliseconds: 300));
+      // 等待 WebSocket 连接就绪后再注册
+      await _channel!.ready;
       send({'type': 'register', 'phone': phone});
+      // 等待注册确认（超时 10 秒）
+      await connected.future.timeout(const Duration(seconds: 10));
     } catch (e) {
+      _channel = null;
       _events.add({'type': 'error', 'message': '连接失败: $e'});
     }
   }

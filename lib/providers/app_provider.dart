@@ -245,6 +245,7 @@ class AppProvider extends ChangeNotifier {
     _toast = '正在连接...';
     notifyListeners();
     await signaling.connect(_serverUrl, phone);
+      await Future.delayed(Duration.zero); // 等待事件传播
     if (!_connected) {
       _toast = '网络连接失败，请检查服务器地址和网络';
       notifyListeners();
