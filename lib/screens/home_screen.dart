@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -52,6 +53,8 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _sentCode = false;
   int _codeCountdown = 0;
   bool _showWizard = true;
+  bool _devMode = false;
+  int _logoTapCount = 0;
 
   static const _defaultServer = 'ws://localhost:3459';
 
@@ -228,18 +231,32 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: 24),
 
-              // Logo
-              Container(
-                width: 72,
-                height: 72,
-                decoration: BoxDecoration(
-                  color: Colors.blue.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                child: const Icon(
-                  Icons.translate,
-                  size: 40,
-                  color: Colors.blue,
+              // Logo (连续点击5次进入开发者模式)
+              GestureDetector(
+                onTap: () {
+                  _logoTapCount++;
+                  if (_logoTapCount >= 5) {
+                    _logoTapCount = 0;
+                    setState(() => _devMode = !_devMode);
+                    if (_devMode) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('开发者模式已开启')),
+                      );
+                    }
+                  }
+                },
+                child: Container(
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: const Icon(
+                    Icons.translate,
+                    size: 40,
+                    color: Colors.blue,
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -253,7 +270,8 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: 32),
 
-              // 服务器 (可折叠)
+              // 服务器 (可折叠) — Release 包隐藏
+              if (!kReleaseMode)
               Container(
                 margin: const EdgeInsets.only(bottom: 16),
                 padding: const EdgeInsets.all(12),
