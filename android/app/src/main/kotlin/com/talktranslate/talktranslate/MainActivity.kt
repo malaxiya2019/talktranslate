@@ -1,9 +1,14 @@
 package com.talktranslate.talktranslate
 
+import android.content.Context
 import android.content.Intent
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.media.AudioManager
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
+import android.net.NetworkRequest
 import android.os.Build
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -13,24 +18,24 @@ class MainActivity : FlutterActivity() {
     private val FOREGROUND_CHANNEL = "talktranslate/foreground"
     private val SERVICE_CHANNEL = "talktranslate/foreground_service"
     private val AUDIO_FOCUS_CHANNEL = "talktranslate/audio_focus"
+    private val NETWORK_CHANNEL = "talktranslate/network_state"
 
     private var audioFocusRequest: AudioFocusRequest? = null
-    private var audioManager: AudioManager? = null
-    private var hasAudioFocus = false
+    private lateinit var audioManager: AudioManager
+    private lateinit var connectivityManager: ConnectivityManager
+    private var networkCallback: ConnectivityManager.NetworkCallback? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
+        connectivityManager = getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
 
         // 悬浮窗 → 回到前台
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, FOREGROUND_CHANNEL)
             .setMethodCallHandler { call, result ->
                 when (call.method) {
                     "bringToForeground" -> {
-                        val intent = packageManager.getLaunchIntentForPackage(packageName)
-                        intent?.flags = Intent.FLAG_ACTIVITY_NEW_TASK or
-                                Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
-                        startActivity(intent)
+                        bringAppToForeground()
                         result.success(true)
                     }
                     else -> result.notImplemented()
@@ -41,45 +46,19 @@ class MainActivity : FlutterActivity() {
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, SERVICE_CHANNEL)
             .setMethodCallHandler { call, result ->
                 when (call.method) {
-                    "startService" -> {
-                        val peer = call.argument<String>("peer") ?: "通话中"
-                        val intent = Intent(this, CallForegroundService::class.java).apply {
-                            action = CallForegroundService.ACTION_START
-                            putExtra(CallForegroundService.EXTRA_PEER, peer)
-                        }
-                        startForegroundService(intent)
-                        result.success(true)
-                    }
-                    "updateNotification" -> {
-                        val peer = call.argument<String>("peer") ?: "通话中"
-                        val duration = call.argument<String>("duration") ?: "00:00"
-                        val intent = Intent(this, CallForegroundService::class.java).apply {
-                            action = CallForegroundService.ACTION_UPDATE
-                            putExtra(CallForegroundService.EXTRA_PEER, peer)
-                            putExtra(CallForegroundService.EXTRA_DURATION, duration)
-                        }
-                        startService(intent)
-                        result.success(true)
-                    }
-                    "stopService" -> {
-                        val intent = Intent(this, CallForegroundService::class.java).apply {
-                            action = CallForegroundService.ACTION_STOP
-                        }
-                        startService(intent)
-                        result.success(true)
-                    }
+                    "startService" -> handleStartService(call)
+                    "updateNotification" -> handleUpdateNotification(call)
+                    "stopService" -> handleStopService()
                     else -> result.notImplemented()
                 }
+                result.success(true)
             }
 
         // 音频焦点管理
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, AUDIO_FOCUS_CHANNEL)
             .setMethodCallHandler { call, result ->
                 when (call.method) {
-                    "requestFocus" -> {
-                        val afResult = requestAudioFocus()
-                        result.success(afResult)
-                    }
+                    "requestFocus" -> result.success(requestAudioFocus())
                     "abandonFocus" -> {
                         abandonAudioFocus()
                         result.success(true)
@@ -87,7 +66,64 @@ class MainActivity : FlutterActivity() {
                     else -> result.notImplemented()
                 }
             }
+
+        // 网络状态监听
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, NETWORK_CHANNEL)
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "startMonitoring" -> {
+                        startNetworkMonitoring(flutterEngine)
+                        result.success(true)
+                    }
+                    "stopMonitoring" -> {
+                        stopNetworkMonitoring()
+                        result.success(true)
+                    }
+                    "getCurrentNetworkType" -> {
+                        result.success(getCurrentNetworkType())
+                    }
+                    else -> result.notImplemented()
+                }
+            }
     }
+
+    // ── Foreground Service Helpers ──
+
+    private fun handleStartService(call: MethodCall) {
+        val peer = call.argument<String>("peer") ?: "通话中"
+        val intent = Intent(this, CallForegroundService::class.java).apply {
+            action = CallForegroundService.ACTION_START
+            putExtra(CallForegroundService.EXTRA_PEER, peer)
+        }
+        startForegroundService(intent)
+    }
+
+    private fun handleUpdateNotification(call: MethodCall) {
+        val peer = call.argument<String>("peer") ?: "通话中"
+        val duration = call.argument<String>("duration") ?: "00:00"
+        val intent = Intent(this, CallForegroundService::class.java).apply {
+            action = CallForegroundService.ACTION_UPDATE
+            putExtra(CallForegroundService.EXTRA_PEER, peer)
+            putExtra(CallForegroundService.EXTRA_DURATION, duration)
+        }
+        startService(intent)
+    }
+
+    private fun handleStopService() {
+        val intent = Intent(this, CallForegroundService::class.java).apply {
+            action = CallForegroundService.ACTION_STOP
+        }
+        startService(intent)
+    }
+
+    private fun bringAppToForeground() {
+        val intent = packageManager.getLaunchIntentForPackage(packageName)
+        intent?.flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+        startActivity(intent)
+    }
+
+    // ── Audio Focus (Spec-compliant) ──
 
     private fun requestAudioFocus(): Boolean {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -95,18 +131,26 @@ class MainActivity : FlutterActivity() {
                 .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
                 .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
                 .build()
-            audioFocusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+            audioFocusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
                 .setAudioAttributes(attributes)
                 .setAcceptsDelayedFocusGain(true)
                 .setOnAudioFocusChangeListener { focusChange ->
-                    hasAudioFocus = focusChange == AudioManager.AUDIOFOCUS_GAIN
+                    when (focusChange) {
+                        AudioManager.AUDIOFOCUS_LOSS -> {
+                            hasAudioFocus = false
+                            // Notify Dart layer
+                        }
+                        AudioManager.AUDIOFOCUS_GAIN -> {
+                            hasAudioFocus = true
+                        }
+                    }
                 }
                 .build()
-            val result = audioManager?.requestAudioFocus(audioFocusRequest!!)
+            val result = audioManager.requestAudioFocus(audioFocusRequest!!)
             hasAudioFocus = result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
         } else {
             @Suppress("DEPRECATION")
-            val result = audioManager?.requestAudioFocus(
+            val result = audioManager.requestAudioFocus(
                 null, AudioManager.STREAM_VOICE_CALL, AudioManager.AUDIOFOCUS_GAIN
             )
             hasAudioFocus = result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
@@ -115,8 +159,70 @@ class MainActivity : FlutterActivity() {
     }
 
     private fun abandonAudioFocus() {
-        audioFocusRequest?.let { audioManager?.abandonAudioFocusRequest(it) }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            audioFocusRequest?.let { audioManager.abandonAudioFocusRequest(it) }
+        } else {
+            @Suppress("DEPRECATION")
+            audioManager.abandonAudioFocus(null)
+        }
         audioFocusRequest = null
         hasAudioFocus = false
+    }
+
+    companion object {
+        var hasAudioFocus = false
+        var currentNetworkType = "unknown"
+    }
+
+    // ── Network Monitoring ──
+
+    private fun startNetworkMonitoring(flutterEngine: FlutterEngine) {
+        val channel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, NETWORK_CHANNEL)
+        val callback = object : ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: Network) {
+                currentNetworkType = getCurrentNetworkType()
+                channel.invokeMethod("onNetworkAvailable", currentNetworkType)
+            }
+
+            override fun onLost(network: Network) {
+                currentNetworkType = "none"
+                channel.invokeMethod("onNetworkLost", null)
+            }
+
+            override fun onCapabilitiesChanged(
+                network: Network,
+                capabilities: NetworkCapabilities
+            ) {
+                currentNetworkType = when {
+                    capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> "wifi"
+                    capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> "cellular"
+                    capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> "ethernet"
+                    else -> "unknown"
+                }
+                channel.invokeMethod("onNetworkChanged", currentNetworkType)
+            }
+        }
+        networkCallback = callback
+
+        val request = NetworkRequest.Builder()
+            .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+            .build()
+        connectivityManager.registerNetworkCallback(request, callback)
+    }
+
+    private fun stopNetworkMonitoring() {
+        networkCallback?.let { connectivityManager.unregisterNetworkCallback(it) }
+        networkCallback = null
+    }
+
+    private fun getCurrentNetworkType(): String {
+        val network = connectivityManager.activeNetwork ?: return "none"
+        val caps = connectivityManager.getNetworkCapabilities(network) ?: return "unknown"
+        return when {
+            caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> "wifi"
+            caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> "cellular"
+            caps.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> "ethernet"
+            else -> "unknown"
+        }
     }
 }

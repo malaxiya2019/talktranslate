@@ -43,6 +43,12 @@ class SessionRestoreService {
     await prefs.setString(_key, jsonEncode(snapshot.toJson()));
   }
 
+  /// 保存开发模式绕过令牌
+  static Future<void> saveBypassToken(String token) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('bypass_token', token);
+  }
+
   /// 清除快照（通话正常结束时）
   static Future<void> clear() async {
     final prefs = await SharedPreferences.getInstance();
