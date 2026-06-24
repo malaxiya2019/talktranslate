@@ -5,7 +5,6 @@ import '../models/call.dart';
 import '../providers/app_provider.dart';
 import '../widgets/common/avatar.dart';
 import '../widgets/common/glass_container.dart';
-import '../widgets/call/call_status_chip.dart';
 import '../widgets/call/connection_status_card.dart';
 import '../widgets/call/call_actions_bar.dart';
 import '../widgets/call/call_timer.dart';
