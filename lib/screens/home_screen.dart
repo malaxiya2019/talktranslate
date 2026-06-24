@@ -599,7 +599,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     onPressed: () {},
                     child: Text(
                       '新用户注册',
-                      style: TextStyle(fontSize: 13, color: Colors.grey[500]),
+                      style: TextStyle(fontSize: 13, color: Color(0xFF1E88E5)),
                     ),
                   ),
                   Text('|', style: TextStyle(color: Colors.grey[300])),
@@ -607,7 +607,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     onPressed: () {},
                     child: Text(
                       '忘记密码',
-                      style: TextStyle(fontSize: 13, color: Colors.grey[500]),
+                      style: TextStyle(fontSize: 13, color: Color(0xFF1E88E5)),
                     ),
                   ),
                 ],
