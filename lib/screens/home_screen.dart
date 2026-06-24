@@ -596,7 +596,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   TextButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('注册功能开发中')),
+                      );
+                    },
                     child: Text(
                       '新用户注册',
                       style: TextStyle(fontSize: 13, color: Color(0xFF1E88E5)),
@@ -604,7 +608,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   Text('|', style: TextStyle(color: Colors.grey[300])),
                   TextButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('密码重置功能开发中')),
+                      );
+                    },
                     child: Text(
                       '忘记密码',
                       style: TextStyle(fontSize: 13, color: Color(0xFF1E88E5)),
