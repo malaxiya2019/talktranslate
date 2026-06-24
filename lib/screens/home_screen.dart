@@ -514,6 +514,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           _codeCtl.text.length >= 4)
                       ? () async {
                             await _loginProvider.verifySmsCode(_codeCtl.text);
+                            await p.setServer(_serverCtl.text.trim());
                             await p.login(_loginProvider.e164Phone);
                             if (mounted && p.connected) {
                               Navigator.pushReplacementNamed(context, '/app');

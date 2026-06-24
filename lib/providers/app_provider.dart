@@ -228,9 +228,11 @@ class AppProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setServer(String url) {
+  Future<void> setServer(String url) async {
     _serverUrl = url;
     notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString("server_url", url);
   }
 
   Future<void> login(String phone) async {
