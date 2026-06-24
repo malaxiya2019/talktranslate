@@ -27,7 +27,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.29.2'
+          flutter-version: '3.44.3'
           channel: 'stable'
           architecture: x64
 
@@ -38,7 +38,7 @@ jobs:
         run: flutter analyze
 
       - name: Test
-        run: flutter test || echo "No tests found"
+        run: flutter test
 
   # ── APK/AAB 构建 ──
   build:
@@ -50,7 +50,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.29.2'
+          flutter-version: '3.44.3'
           channel: 'stable'
           architecture: x64
 

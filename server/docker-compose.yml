@@ -10,3 +10,47 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3459
+      # JWT — 生产环境务必改掉
+      - JWT_SECRET=talktranslate_dev_secret_2026
+      # PostgreSQL
+      - PG_HOST=postgres
+      - PG_PORT=5432
+      - PG_DB=talktranslate
+      - PG_USER=talktranslate
+      - PG_PASSWORD=${PG_PASSWORD:-talktranslate}
+      - PG_POOL_MAX=20
+      - PG_POOL_IDLE=30000
+      - PG_CONNECT_TIMEOUT=5000
+      # Redis
+      - REDIS_URL=redis://redis:6380
+    depends_on:
+      redis:
+        condition: service_started
+      postgres:
+        condition: service_started
+
+  redis:
+    image: redis:7-alpine
+    container_name: talktranslate-redis
+    ports:
+      - "6380:6379"
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: talktranslate-pg
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=talktranslate
+      - POSTGRES_USER=talktranslate
+      - POSTGRES_PASSWORD=${PG_PASSWORD:-talktranslate}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+volumes:
+  redis_data:
+  pg_data:

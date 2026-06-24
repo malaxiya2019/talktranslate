@@ -58,3 +58,4 @@ server/nginx.conf
 # 签名密钥
 android/app/upload-keystore.jks
 android/key.properties
+*.dill
