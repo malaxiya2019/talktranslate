@@ -10,6 +10,8 @@ import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodCall
@@ -182,12 +184,16 @@ class MainActivity : FlutterActivity() {
         val callback = object : ConnectivityManager.NetworkCallback() {
             override fun onAvailable(network: Network) {
                 currentNetworkType = getCurrentNetworkType()
-                channel.invokeMethod("onNetworkAvailable", currentNetworkType)
+                Handler(Looper.getMainLooper()).post {
+                    channel.invokeMethod("onNetworkAvailable", currentNetworkType)
+                }
             }
 
             override fun onLost(network: Network) {
                 currentNetworkType = "none"
-                channel.invokeMethod("onNetworkLost", null)
+                Handler(Looper.getMainLooper()).post {
+                    channel.invokeMethod("onNetworkLost", null)
+                }
             }
 
             override fun onCapabilitiesChanged(
@@ -200,7 +206,9 @@ class MainActivity : FlutterActivity() {
                     capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> "ethernet"
                     else -> "unknown"
                 }
-                channel.invokeMethod("onNetworkChanged", currentNetworkType)
+                Handler(Looper.getMainLooper()).post {
+                    channel.invokeMethod("onNetworkChanged", currentNetworkType)
+                }
             }
         }
         networkCallback = callback
