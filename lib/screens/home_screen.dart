@@ -691,6 +691,15 @@ class _HomeScreenState extends State<HomeScreen> {
                     color: Colors.grey[500],
                   ),
                 ),
+                const SizedBox(width: 12),
+                GestureDetector(
+                  onTap: () => SystemNavigator.pop(),
+                  child: Icon(
+                    Icons.close,
+                    size: 20,
+                    color: Colors.grey[500],
+                  ),
+                ),
               ],
             ),
           ),
