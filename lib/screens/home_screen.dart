@@ -7,6 +7,7 @@ import '../providers/login_provider.dart';
 import 'call_screen.dart';
 import 'settings_screen.dart';
 import 'history_screen.dart';
+import 'register_screen.dart';
 
 /// 国家代码
 class CountryCode {
@@ -597,8 +598,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   TextButton(
                     onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('注册功能开发中')),
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const RegisterScreen()),
                       );
                     },
                     child: Text(

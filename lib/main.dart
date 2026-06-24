@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'providers/app_provider.dart';
 import 'screens/settings_screen.dart';
+import 'screens/register_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/app_shell.dart';
 
@@ -36,6 +37,7 @@ class TalkTranslateApp extends StatelessWidget {
         routes: {
           '/': (_) => const HomeScreen(),
           '/app': (_) => const AppShell(),
+        '/register': (_) => const RegisterScreen(),
         },
       ),
     );
