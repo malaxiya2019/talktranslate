@@ -66,7 +66,8 @@ class CallStateMachine {
   bool get isCallActive =>
       _state == CallState.connecting ||
       _state == CallState.ringing ||
-      _state == CallState.inCall;
+      _state == CallState.inCall ||
+      _state == CallState.reconnecting;
 
   /// 重置到 idle（断开/失败后）
   void reset() {

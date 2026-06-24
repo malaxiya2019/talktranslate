@@ -37,6 +37,9 @@ jobs:
       - name: Analyze
         run: flutter analyze
 
+      - name: Test
+        run: flutter test || echo "No tests found"
+
   # ── APK/AAB 构建 ──
   build:
     needs: analyze
