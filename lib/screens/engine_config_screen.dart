@@ -74,7 +74,6 @@ class _EngineConfigScreenState extends State<EngineConfigScreen> {
     });
 
     try {
-      final engine = _EngineOption.list.firstWhere((e) => e.id == _selectedEngine);
       final url = _baseUrlCtl.text.trim().isNotEmpty
           ? _baseUrlCtl.text.trim()
           : _defaultEndpoint(_selectedEngine);
