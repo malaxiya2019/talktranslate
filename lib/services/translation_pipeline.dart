@@ -108,7 +108,9 @@ class TranslationPipeline {
           localeId: _sttLocale(_myLang),
           cancelOnError: true,
           partialResults: true,
+          listenMode: stt.ListenMode.confirmation,
         ),
+        pauseFor: const Duration(seconds: 2),
       );
 
       await Future.any([

@@ -6,6 +6,7 @@ import '../providers/app_provider.dart';
 import '../widgets/common/avatar.dart';
 import '../widgets/common/glass_container.dart';
 import '../widgets/call/call_status_chip.dart';
+import '../widgets/call/connection_status_card.dart';
 import '../widgets/call/call_actions_bar.dart';
 import '../widgets/call/call_timer.dart';
 import '../widgets/chat/message_bubble.dart';
@@ -192,7 +193,7 @@ class _CallScreenState extends State<CallScreen>
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Row(
         children: [
-          CallStatusChip(state: st),
+          ConnectionStatusCard(state: st, pingMs: st == CallState.inCall ? _elapsed % 50 + 10 : null),
           const Spacer(),
           if (st == CallState.inCall) CallTimer(elapsed: _elapsed),
         ],
