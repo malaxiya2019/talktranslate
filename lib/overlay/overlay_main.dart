@@ -9,7 +9,7 @@ import '../widgets/overlay/floating_panel.dart';
 void main() => runApp(const _OverlayApp());
 
 class _OverlayApp extends StatelessWidget {
-  const _OverlayApp({super.key});
+  const _OverlayApp();
 
   @override
   Widget build(BuildContext context) {

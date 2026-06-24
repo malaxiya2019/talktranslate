@@ -11,21 +11,6 @@ import '../widgets/call/call_timer.dart';
 import '../widgets/chat/message_bubble.dart';
 import '../widgets/chat/translation_card.dart';
 
-const _langDisplay = <String, String>{
-  'zh-CN': '🇨🇳 中文',
-  'en-US': '🇺🇸 English',
-  'ja-JP': '🇯🇵 日本語',
-  'ko-KR': '🇰🇷 한국어',
-  'es-ES': '🇪🇸 Español',
-  'fr-FR': '🇫🇷 Français',
-  'de-DE': '🇩🇪 Deutsch',
-  'pt-BR': '🇧🇷 Português',
-  'ru-RU': '🇷🇺 Русский',
-  'ar-SA': '🇦🇸 العربية',
-  'th-TH': '🇹🇭 ไทย',
-  'vi-VN': '🇻🇳 Tiếng Việt',
-};
-
 /// 通话页面 — Selector 局部绑定，防 rebuild 风暴
 class CallScreen extends StatefulWidget {
   const CallScreen({super.key});
