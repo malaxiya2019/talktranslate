@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
+import 'engine_config_screen.dart';
 
 /// 支持的语言
 class AppLanguage {
@@ -197,6 +198,42 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
 
+          const SizedBox(height: 24),
+
+          // ── 翻译引擎 ──
+          _sectionHeader('🔌 翻译引擎', '切换AI模型与自定义API'),
+          const SizedBox(height: 8),
+          InkWell(
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const EngineConfigScreen()),
+            ),
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.grey[50],
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey[200]!),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.model_training, color: Colors.blue),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('翻译引擎', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: Colors.grey[800])),
+                        Text('OpenAI / Anthropic / DeepL / 百度', style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+                      ],
+                    ),
+                  ),
+                  Icon(Icons.chevron_right, color: Colors.grey[400]),
+                ],
+              ),
+            ),
+          ),
           const SizedBox(height: 24),
 
           // ── 服务器 ──
