@@ -47,8 +47,15 @@ function broadcastOnline() {
   for (const [, { ws }] of users) send(ws, { type: "online", users: list });
 }
 
+wss.on("error", (err) => console.error("  ❌ 服务器异常:", err.message));
+
 wss.on("connection", (ws) => {
   let phone = null;
+
+  ws.on("error", (err) => {
+    if (phone) console.error(`  ❌ 连接异常: ${phone}`, err.message);
+    else console.error("  ❌ 连接异常:", err.message);
+  });
 
   ws.on("message", (raw) => {
     let msg;
