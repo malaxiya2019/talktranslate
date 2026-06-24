@@ -21,7 +21,10 @@ class ForegroundService {
   Future<void> start(String peerName) async {
     if (_active) return;
     try {
-      await _channel.invokeMethod('startService', {'peer': peerName});
+      await _channel.invokeMethod('startService', {
+        'peer': peerName,
+        'status': '已连接',
+      });
       _active = true;
     } catch (_) {
       // Android 平台不可用（iOS/桌面）

@@ -26,6 +26,7 @@ class CallForegroundService : Service() {
         const val ACTION_UPDATE = "ACTION_UPDATE"
         const val EXTRA_PEER = "extra_peer"
         const val EXTRA_DURATION = "extra_duration"
+        const val EXTRA_STATUS = "extra_status"
     }
 
     override fun onCreate() {
@@ -78,9 +79,11 @@ class CallForegroundService : Service() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        val status = peer // 实际传入了 "已连接" 等状态文字
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("TalkTranslate")
             .setContentText("正在与 $peer 通话 · $duration")
+            .setSubText("[$status]")
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setOngoing(true)
