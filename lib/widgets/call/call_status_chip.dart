@@ -25,10 +25,7 @@ class CallStatusChip extends StatelessWidget {
         children: [
           Icon(_icon, size: 12, color: _color),
           const SizedBox(width: 4),
-          Text(
-            _label,
-            style: TextStyle(fontSize: 11, color: _color),
-          ),
+          Text(_label, style: TextStyle(fontSize: 11, color: _color)),
         ],
       ),
     );

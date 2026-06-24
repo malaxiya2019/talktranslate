@@ -25,7 +25,10 @@ class SubtitleView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (subtitle.isEmpty && translated.isEmpty) {
-      return Text(emptyText, style: TextStyle(color: Colors.grey[600], fontSize: 11));
+      return Text(
+        emptyText,
+        style: TextStyle(color: Colors.grey[600], fontSize: 11),
+      );
     }
 
     return Column(

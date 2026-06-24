@@ -102,7 +102,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
           TextButton.icon(
             onPressed: _saving ? null : _save,
             icon: _saving
-                ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
                 : const Icon(Icons.check),
             label: const Text('保存'),
           ),
@@ -124,24 +128,40 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('DeepSeek API Key', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.grey[700])),
+                Text(
+                  'DeepSeek API Key',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey[700],
+                  ),
+                ),
                 const SizedBox(height: 8),
                 TextField(
                   controller: _apiKeyCtl,
                   obscureText: _obscureKey,
                   decoration: InputDecoration(
                     hintText: 'sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                     contentPadding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
                     suffixIcon: IconButton(
-                      icon: Icon(_obscureKey ? Icons.visibility_off : Icons.visibility, size: 18),
-                      onPressed: () => setState(() => _obscureKey = !_obscureKey),
+                      icon: Icon(
+                        _obscureKey ? Icons.visibility_off : Icons.visibility,
+                        size: 18,
+                      ),
+                      onPressed: () =>
+                          setState(() => _obscureKey = !_obscureKey),
                     ),
                   ),
                   style: const TextStyle(fontSize: 14, fontFamily: 'monospace'),
                 ),
                 const SizedBox(height: 8),
-                Text('从 platform.deepseek.com 获取', style: TextStyle(fontSize: 11, color: Colors.grey[400])),
+                Text(
+                  '从 platform.deepseek.com 获取',
+                  style: TextStyle(fontSize: 11, color: Colors.grey[400]),
+                ),
               ],
             ),
           ),
@@ -196,14 +216,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   controller: _serverCtl,
                   decoration: InputDecoration(
                     hintText: 'ws://your-server.com:3459',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                     contentPadding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
                     prefix: const Icon(Icons.dns, size: 16),
                   ),
                   style: const TextStyle(fontSize: 14, fontFamily: 'monospace'),
                 ),
                 const SizedBox(height: 8),
-                Text('默认: ws://localhost:3459', style: TextStyle(fontSize: 11, color: Colors.grey[400])),
+                Text(
+                  '默认: ws://localhost:3459',
+                  style: TextStyle(fontSize: 11, color: Colors.grey[400]),
+                ),
               ],
             ),
           ),
@@ -222,7 +247,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: SwitchListTile(
               title: const Text('朗读翻译', style: TextStyle(fontSize: 15)),
-              subtitle: const Text('自动朗读对方的翻译结果', style: TextStyle(fontSize: 12)),
+              subtitle: const Text(
+                '自动朗读对方的翻译结果',
+                style: TextStyle(fontSize: 12),
+              ),
               value: _ttsEnabled,
               onChanged: (v) => setState(() => _ttsEnabled = v),
               contentPadding: EdgeInsets.zero,
@@ -233,7 +261,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           // ── 版本 ──
           Center(
-            child: Text('TalkTranslate v2.0.0', style: TextStyle(fontSize: 12, color: Colors.grey[300])),
+            child: Text(
+              'TalkTranslate v2.0.0',
+              style: TextStyle(fontSize: 12, color: Colors.grey[300]),
+            ),
           ),
           const SizedBox(height: 24),
         ],
@@ -245,7 +276,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        Text(
+          title,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: 2),
         Text(subtitle, style: TextStyle(fontSize: 12, color: Colors.grey[500])),
       ],
@@ -269,9 +303,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(label, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                   const SizedBox(height: 2),
-                  Text(subtitle, style: TextStyle(fontSize: 11, color: Colors.grey[400])),
+                  Text(
+                    subtitle,
+                    style: TextStyle(fontSize: 11, color: Colors.grey[400]),
+                  ),
                 ],
               ),
             ),
@@ -281,7 +324,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 color: Colors.blue.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Text('${lang.flag} ${lang.name}', style: const TextStyle(fontSize: 14, color: Colors.blue)),
+              child: Text(
+                '${lang.flag} ${lang.name}',
+                style: const TextStyle(fontSize: 14, color: Colors.blue),
+              ),
             ),
             const SizedBox(width: 4),
             const Icon(Icons.chevron_right, size: 18, color: Colors.grey),
@@ -303,31 +349,53 @@ class _SettingsScreenState extends State<SettingsScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.all(12),
-            child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2))),
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
           ),
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
-            child: Text('选择${isMyLang ? '我的' : '对方'}语言', style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+            child: Text(
+              '选择${isMyLang ? '我的' : '对方'}语言',
+              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+            ),
           ),
           const Divider(height: 1),
           SizedBox(
             height: 360,
             child: ListView(
-              children: AppLanguage.list.map((lang) => ListTile(
-                leading: Text(lang.flag, style: const TextStyle(fontSize: 24)),
-                title: Text(lang.name),
-                subtitle: Text(lang.code, style: TextStyle(fontSize: 12, color: Colors.grey[400])),
-                trailing: current.code == lang.code
-                    ? const Icon(Icons.check, color: Colors.blue)
-                    : null,
-                onTap: () {
-                  setState(() {
-                    if (isMyLang) _myLang = lang;
-                    else _peerLang = lang;
-                  });
-                  Navigator.pop(context);
-                },
-              )).toList(),
+              children: AppLanguage.list
+                  .map(
+                    (lang) => ListTile(
+                      leading: Text(
+                        lang.flag,
+                        style: const TextStyle(fontSize: 24),
+                      ),
+                      title: Text(lang.name),
+                      subtitle: Text(
+                        lang.code,
+                        style: TextStyle(fontSize: 12, color: Colors.grey[400]),
+                      ),
+                      trailing: current.code == lang.code
+                          ? const Icon(Icons.check, color: Colors.blue)
+                          : null,
+                      onTap: () {
+                        setState(() {
+                          if (isMyLang)
+                            _myLang = lang;
+                          else
+                            _peerLang = lang;
+                        });
+                        Navigator.pop(context);
+                      },
+                    ),
+                  )
+                  .toList(),
             ),
           ),
         ],

@@ -33,7 +33,10 @@ class _CallActionButton extends StatelessWidget {
             child: Icon(icon, color: color, size: size * 0.45),
           ),
           const SizedBox(height: 4),
-          Text(label, style: const TextStyle(color: Colors.white38, fontSize: 11)),
+          Text(
+            label,
+            style: const TextStyle(color: Colors.white38, fontSize: 11),
+          ),
         ],
       ),
     );
@@ -41,14 +44,7 @@ class _CallActionButton extends StatelessWidget {
 }
 
 /// 通话控制按钮类型
-enum ActionType {
-  mute,
-  speaker,
-  hangup,
-  minimize,
-  answer,
-  reject,
-}
+enum ActionType { mute, speaker, hangup, minimize, answer, reject }
 
 /// 通话底部操作栏
 ///
@@ -88,48 +84,48 @@ class CallActionsBar extends StatelessWidget {
   }
 
   List<Widget> get _inCallButtons => [
-        _CallActionButton(
-          icon: Icons.minimize,
-          color: Colors.blue,
-          label: '最小化',
-          onTap: () => onAction?.call(ActionType.minimize),
-        ),
-        _CallActionButton(
-          icon: muted ? Icons.mic_off : Icons.mic,
-          color: muted ? Colors.red : Colors.white38,
-          label: '静音',
-          onTap: () => onAction?.call(ActionType.mute),
-        ),
-        _CallActionButton(
-          icon: Icons.call_end,
-          color: Colors.red,
-          label: '挂断',
-          size: 52,
-          onTap: () => onAction?.call(ActionType.hangup),
-        ),
-        _CallActionButton(
-          icon: speakerOn ? Icons.volume_up : Icons.hearing,
-          color: speakerOn ? Colors.blue : Colors.white38,
-          label: '扬声器',
-          onTap: () => onAction?.call(ActionType.speaker),
-        ),
-      ];
+    _CallActionButton(
+      icon: Icons.minimize,
+      color: Colors.blue,
+      label: '最小化',
+      onTap: () => onAction?.call(ActionType.minimize),
+    ),
+    _CallActionButton(
+      icon: muted ? Icons.mic_off : Icons.mic,
+      color: muted ? Colors.red : Colors.white38,
+      label: '静音',
+      onTap: () => onAction?.call(ActionType.mute),
+    ),
+    _CallActionButton(
+      icon: Icons.call_end,
+      color: Colors.red,
+      label: '挂断',
+      size: 52,
+      onTap: () => onAction?.call(ActionType.hangup),
+    ),
+    _CallActionButton(
+      icon: speakerOn ? Icons.volume_up : Icons.hearing,
+      color: speakerOn ? Colors.blue : Colors.white38,
+      label: '扬声器',
+      onTap: () => onAction?.call(ActionType.speaker),
+    ),
+  ];
 
   List<Widget> get _ringingButtons => [
-        _CallActionButton(
-          icon: Icons.call,
-          color: Colors.green,
-          label: '接听',
-          size: 52,
-          onTap: () => onAction?.call(ActionType.answer),
-        ),
-        const SizedBox(width: 48),
-        _CallActionButton(
-          icon: Icons.call_end,
-          color: Colors.red,
-          label: '拒接',
-          size: 52,
-          onTap: () => onAction?.call(ActionType.reject),
-        ),
-      ];
+    _CallActionButton(
+      icon: Icons.call,
+      color: Colors.green,
+      label: '接听',
+      size: 52,
+      onTap: () => onAction?.call(ActionType.answer),
+    ),
+    const SizedBox(width: 48),
+    _CallActionButton(
+      icon: Icons.call_end,
+      color: Colors.red,
+      label: '拒接',
+      size: 52,
+      onTap: () => onAction?.call(ActionType.reject),
+    ),
+  ];
 }

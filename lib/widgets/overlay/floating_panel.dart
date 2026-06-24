@@ -60,9 +60,16 @@ class FloatingPanel extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFF0D0D0D),
         borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.15), width: 1.5),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.15),
+          width: 1.5,
+        ),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.4), blurRadius: 12, offset: const Offset(0, 4)),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.4),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
       child: Column(
@@ -70,8 +77,14 @@ class FloatingPanel extends StatelessWidget {
         children: [
           // 首字母
           Text(
-            peerName.length >= 2 ? peerName.substring(peerName.length - 2) : peerName,
-            style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+            peerName.length >= 2
+                ? peerName.substring(peerName.length - 2)
+                : peerName,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 4),
           // 状态小点 + 波形
@@ -82,8 +95,13 @@ class FloatingPanel extends StatelessWidget {
               if (state == CallState.inCall) ...[
                 const SizedBox(width: 4),
                 SizedBox(
-                  width: 24, height: 10,
-                  child: AudioWave(active: true, barColor: Colors.greenAccent, barCount: 3),
+                  width: 24,
+                  height: 10,
+                  child: AudioWave(
+                    active: true,
+                    barColor: Colors.greenAccent,
+                    barCount: 3,
+                  ),
                 ),
               ],
             ],
@@ -96,13 +114,28 @@ class FloatingPanel extends StatelessWidget {
   Widget _dot(CallState s) {
     Color c;
     switch (s) {
-      case CallState.inCall: c = Colors.greenAccent; break;
-      case CallState.connecting: case CallState.ringing: c = Colors.orange; break;
-      case CallState.reconnecting: c = Colors.orangeAccent; break;
-      case CallState.failed: c = Colors.red; break;
-      case CallState.idle: c = Colors.grey; break;
+      case CallState.inCall:
+        c = Colors.greenAccent;
+        break;
+      case CallState.connecting:
+      case CallState.ringing:
+        c = Colors.orange;
+        break;
+      case CallState.reconnecting:
+        c = Colors.orangeAccent;
+        break;
+      case CallState.failed:
+        c = Colors.red;
+        break;
+      case CallState.idle:
+        c = Colors.grey;
+        break;
     }
-    return Container(width: 6, height: 6, decoration: BoxDecoration(color: c, shape: BoxShape.circle));
+    return Container(
+      width: 6,
+      height: 6,
+      decoration: BoxDecoration(color: c, shape: BoxShape.circle),
+    );
   }
 
   // ── 展开态：完整面板 ──
@@ -130,7 +163,11 @@ class FloatingPanel extends StatelessWidget {
               const Spacer(),
               Text(
                 peerName,
-                style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ],
           ),
@@ -142,9 +179,15 @@ class FloatingPanel extends StatelessWidget {
           if (state == CallState.inCall)
             AudioWave(active: true, barColor: Colors.greenAccent, barCount: 5),
           if (state == CallState.reconnecting)
-            Text('正在恢复连接...', style: TextStyle(color: Colors.orangeAccent[200], fontSize: 11)),
+            Text(
+              '正在恢复连接...',
+              style: TextStyle(color: Colors.orangeAccent[200], fontSize: 11),
+            ),
           if (state == CallState.failed)
-            Text('通话已断开', style: TextStyle(color: Colors.red[300], fontSize: 11)),
+            Text(
+              '通话已断开',
+              style: TextStyle(color: Colors.red[300], fontSize: 11),
+            ),
           const SizedBox(height: 12),
 
           // ── Footer: 控制微栏 ──
@@ -159,8 +202,12 @@ class FloatingPanel extends StatelessWidget {
                     label: const Text('打开', style: TextStyle(fontSize: 12)),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.white70,
-                      side: BorderSide(color: Colors.white.withValues(alpha: 0.15)),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      side: BorderSide(
+                        color: Colors.white.withValues(alpha: 0.15),
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
                   ),
                 ),
@@ -176,7 +223,9 @@ class FloatingPanel extends StatelessWidget {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.red,
                       foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
                   ),
                 ),

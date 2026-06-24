@@ -34,9 +34,10 @@ class _StateIndicatorState extends State<StateIndicator>
       vsync: this,
       duration: const Duration(milliseconds: 1200),
     );
-    _pulseAnim = Tween<double>(begin: 0.4, end: 1.0).animate(
-      CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut),
-    );
+    _pulseAnim = Tween<double>(
+      begin: 0.4,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut));
     if (_shouldPulse) _pulseCtrl.repeat(reverse: true);
   }
 
@@ -60,7 +61,8 @@ class _StateIndicatorState extends State<StateIndicator>
   }
 
   bool get _shouldPulse =>
-      widget.state == CallState.inCall || widget.state == CallState.reconnecting;
+      widget.state == CallState.inCall ||
+      widget.state == CallState.reconnecting;
 
   Color get _color {
     switch (widget.state) {
@@ -120,10 +122,7 @@ class _StateIndicatorState extends State<StateIndicator>
         ),
         if (_label.isNotEmpty) ...[
           const SizedBox(width: 6),
-          Text(
-            _label,
-            style: TextStyle(fontSize: 11, color: _color),
-          ),
+          Text(_label, style: TextStyle(fontSize: 11, color: _color)),
         ],
       ],
     );

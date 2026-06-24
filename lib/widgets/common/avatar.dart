@@ -33,7 +33,9 @@ class Avatar extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: size / 2,
-            backgroundColor: (backgroundColor ?? Colors.blue).withValues(alpha: 0.1),
+            backgroundColor: (backgroundColor ?? Colors.blue).withValues(
+              alpha: 0.1,
+            ),
             child: Text(
               _initials,
               style: TextStyle(
