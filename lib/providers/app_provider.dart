@@ -27,7 +27,7 @@ class AppProvider extends ChangeNotifier {
   List<String> get onlineUsers => _onlineUsers;
 
   // ── 服务器 ──
-  String _serverUrl = 'ws://localhost:3459';
+  String _serverUrl = '';
   String get serverUrl => _serverUrl;
 
   // ── API Key ──
@@ -114,7 +114,7 @@ class AppProvider extends ChangeNotifier {
     _myLang = prefs.getString('my_lang') ?? 'zh-CN';
     _peerLang = prefs.getString('peer_lang') ?? 'en-US';
     _ttsEnabled = prefs.getBool('tts_enabled') ?? true;
-    _serverUrl = prefs.getString('server_url') ?? 'ws://localhost:3459';
+    _serverUrl = prefs.getString('server_url') ?? '';
     _callHistory = _loadCallHistory(prefs);
 
     // 注入到服务层
@@ -225,7 +225,18 @@ class AppProvider extends ChangeNotifier {
 
   Future<void> login(String phone) async {
     _phone = phone;
+    if (_serverUrl.isEmpty) {
+      _toast = '请先设置服务器地址（设置页或连续点击Logo 5次进入开发者模式）';
+      notifyListeners();
+      return;
+    }
+    _toast = '正在连接...';
+    notifyListeners();
     await signaling.connect(_serverUrl, phone);
+    if (!_connected) {
+      _toast = '网络连接失败，请检查服务器地址和网络';
+      notifyListeners();
+    }
   }
 
   void logout() {

@@ -38,7 +38,7 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   final _apiKeyCtl = TextEditingController();
-  final _serverCtl = TextEditingController(text: 'ws://localhost:3459');
+  final _serverCtl = TextEditingController();
   bool _obscureKey = true;
   bool _ttsEnabled = true;
 
@@ -263,7 +263,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  '默认: ws://localhost:3459',
+                  '留空则使用 ws://192.168.x.x:3459',
                   style: TextStyle(fontSize: 11, color: Colors.grey[400]),
                 ),
               ],

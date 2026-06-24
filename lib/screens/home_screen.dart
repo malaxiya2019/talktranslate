@@ -47,7 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final _phoneCtl = TextEditingController();
   final _codeCtl = TextEditingController();
   final _dialCtl = TextEditingController();
-  final _serverCtl = TextEditingController(text: 'ws://localhost:3459');
+  final _serverCtl = TextEditingController();
   bool _agreed = false;
   CountryCode _country = CountryCode.list[0];
   bool _sentCode = false;
@@ -56,7 +56,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _devMode = false;
   int _logoTapCount = 0;
 
-  static const _defaultServer = 'ws://localhost:3459';
+  static const _defaultServer = '';
 
   @override
   void didChangeDependencies() {
