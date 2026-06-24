@@ -50,3 +50,11 @@ server/node_modules/
 server/test.cjs
 server/*.cjs
 android/app/keystore_b64.txt
+
+# Server 数据文件（含用户信息）
+server/data/
+server/nginx.conf
+
+# 签名密钥
+android/app/upload-keystore.jks
+android/key.properties
