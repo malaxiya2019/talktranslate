@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../services/signaling_service.dart';
 import '../services/call_service.dart';
 import '../services/session_restore_service.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/call.dart';
 
 /// 全局状态 — 通过 init() 异步初始化
@@ -121,7 +122,22 @@ class AppProvider extends ChangeNotifier {
     callService.pipeline.setLanguages(_myLang, _peerLang);
     callService.pipeline.setTtsEnabled(_ttsEnabled);
 
+    // 加载加密存储的引擎配置
+    _loadEngineConfig();
+
     notifyListeners();
+  }
+
+  Future<void> _loadEngineConfig() async {
+    try {
+      const secure = FlutterSecureStorage();
+      final apiKey = await secure.read(key: 'translation_api_key');
+      if (apiKey != null && apiKey.isNotEmpty) {
+        callService.pipeline.setApiKey(apiKey);
+      }
+    } catch (_) {
+      // SecureStorage 不可用时忽略
+    }
   }
 
   /// 尝试恢复上次通话

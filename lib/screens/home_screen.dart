@@ -70,7 +70,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_showWizard) return _buildWizard();
+    // 已登录或嵌入 AppShell 时跳过向导
+    final isEmbedded = ModalRoute.of(context)?.settings.name == '/app';
+    if (_showWizard && !isEmbedded) {
+      final p = context.read<AppProvider>();
+      if (!p.connected) return _buildWizard();
+    }
+    if (_showWizard) _showWizard = false;
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
