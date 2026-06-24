@@ -59,6 +59,16 @@ class _HomeScreenState extends State<HomeScreen> {
   static const _defaultServer = 'ws://localhost:3459';
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // 已登录则跳过向导
+    final p = context.read<AppProvider>();
+    if (p.connected && _showWizard) {
+      setState(() => _showWizard = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     if (_showWizard) return _buildWizard();
     return PopScope(
@@ -483,8 +493,14 @@ class _HomeScreenState extends State<HomeScreen> {
                       (_phoneCtl.text.trim().length >= 6 &&
                           _codeCtl.text.length >= 4 &&
                           _agreed)
-                      ? () =>
-                            p.login('${_country.dial} ${_phoneCtl.text.trim()}')
+                      ? () async {
+                            await p.login(
+                              '${_country.dial} ${_phoneCtl.text.trim()}',
+                            );
+                            if (mounted && p.connected) {
+                              Navigator.pushReplacementNamed(context, '/app');
+                            }
+                          }
                       : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue,

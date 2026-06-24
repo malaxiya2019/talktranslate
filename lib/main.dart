@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/app_provider.dart';
 import 'screens/home_screen.dart';
+import 'screens/app_shell.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,7 +23,11 @@ class TalkTranslateApp extends StatelessWidget {
         title: 'TalkTranslate',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(colorSchemeSeed: Colors.blue, useMaterial3: true),
-        home: const HomeScreen(),
+        initialRoute: '/',
+        routes: {
+          '/': (_) => const HomeScreen(),
+          '/app': (_) => const AppShell(),
+        },
       ),
     );
   }
