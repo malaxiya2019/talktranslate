@@ -54,7 +54,6 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _sentCode = false;
   int _codeCountdown = 0;
   bool _showWizard = true;
-  bool _devMode = false;
   int _logoTapCount = 0;
 
   static const _defaultServer = '';
@@ -197,7 +196,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       setState(() => _showWizard = false);
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
+                    backgroundColor: const Color(0xFF1E88E5),
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -238,24 +237,36 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // 连接状态
+              // 连接状态 + 语言切换
               Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: _serverCtl.text.contains('localhost')
-                          ? Colors.orange
-                          : Colors.green,
-                    ),
+                  const Spacer(),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 8, height: 8,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: _serverCtl.text.contains('localhost')
+                              ? Colors.orange : Colors.green,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        _serverCtl.text.contains('localhost') ? '未连接' : '就绪',
+                        style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 6),
-                  Text(
-                    _serverCtl.text.contains('localhost') ? '未连接' : '就绪',
-                    style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                  const Spacer(),
+                  InkWell(
+                    onTap: () => _showLanguagePicker(context),
+                    child: const Padding(
+                      padding: EdgeInsets.all(4),
+                      child: Text('🌐', style: TextStyle(fontSize: 20)),
+                    ),
                   ),
                 ],
               ),
@@ -263,15 +274,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
               // Logo (连续点击5次进入开发者模式)
               GestureDetector(
-                onTap: () {
+                onTap: () async {
                   _logoTapCount++;
                   if (_logoTapCount >= 5) {
                     _logoTapCount = 0;
-                    setState(() => _devMode = !_devMode);
-                    if (_devMode) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('开发者模式已开启')),
-                      );
+                    final url = await _showDevDialog(context);
+                    if (url != null) {
+                      _serverCtl.text = url;
+                      await p.setServer(url);
                     }
                   }
                 },
@@ -300,7 +310,8 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: 32),
 
-              // 服务器配置 — 始终可见
+              // 服务器 (可折叠) — Release 包隐藏
+              if (!kReleaseMode)
               Container(
                 margin: const EdgeInsets.only(bottom: 16),
                 padding: const EdgeInsets.all(12),
@@ -476,7 +487,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: TextField(
                           controller: _codeCtl,
                           decoration: InputDecoration(
-                            hintText: '输入6位验证码',
+                            hintText: '输入验证码',
                             border: InputBorder.none,
                             contentPadding: const EdgeInsets.fromLTRB(
                               12,
@@ -484,7 +495,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               12,
                               14,
                             ),
-                            suffixText: '${_codeCountdown}s',
+                            suffixText: _codeCountdown > 0 ? '重新获取 (${_codeCountdown}s)' : '重新获取',
                             suffixStyle: TextStyle(
                               fontSize: 12,
                               color: Colors.grey[400],
@@ -522,13 +533,14 @@ class _HomeScreenState extends State<HomeScreen> {
                           }
                       : null,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
+                    backgroundColor: const Color(0xFF1E88E5),
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                     elevation: 0,
                     disabledBackgroundColor: Colors.grey[200],
+                    disabledForegroundColor: Colors.grey[600],
                   ),
                   child: const Text(
                     '登录',
@@ -610,6 +622,72 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+  }
+
+
+
+  /// 语言切换弹窗
+  void _showLanguagePicker(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: const Text('选择语言 / Select Language'),
+        children: AppLanguage.list.map((lang) => SimpleDialogOption(
+          onPressed: () {
+            // TODO: 应用语言切换
+            Navigator.pop(ctx);
+          },
+          child: Row(
+            children: [
+              Text(lang.flag, style: const TextStyle(fontSize: 20)),
+              const SizedBox(width: 12),
+              Text(lang.name, style: const TextStyle(fontSize: 15)),
+              const SizedBox(width: 8),
+              Text(lang.code, style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+            ],
+          ),
+        )).toList(),
+      ),
+    );
+  }
+
+  /// 开发者模式弹窗 — 连续点击 Logo 5 次触发
+  Future<String?> _showDevDialog(BuildContext context) async {
+    final ctl = TextEditingController(text: _serverCtl.text);
+    final url = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('开发者模式'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('请输入 WebSocket 服务器地址', style: TextStyle(fontSize: 14)),
+            const SizedBox(height: 12),
+            TextField(
+              controller: ctl,
+              decoration: const InputDecoration(
+                hintText: 'wss://your-server.com',
+                border: OutlineInputBorder(),
+                isDense: true,
+              ),
+              style: const TextStyle(fontSize: 14),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, null),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, ctl.text.trim()),
+            child: const Text('确定', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+    ctl.dispose();
+    return url;
   }
 
   void _showCountryPicker() {
