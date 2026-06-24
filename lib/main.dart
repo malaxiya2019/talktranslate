@@ -20,7 +20,7 @@ class TalkTranslateApp extends StatelessWidget {
     return ChangeNotifierProvider.value(
       value: provider,
       child: MaterialApp(
-        title: 'TalkTranslate',
+        title: 'TalkTranslate v2',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(colorSchemeSeed: Colors.blue, useMaterial3: true),
         initialRoute: '/',
