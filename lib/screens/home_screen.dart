@@ -411,6 +411,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           _codeCountdown = 60;
                         });
                         _startCountdown();
+                        if (!kReleaseMode) _codeCtl.text = '123456';
                       }
                     },
                     style: OutlinedButton.styleFrom(
@@ -500,9 +501,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           _codeCtl.text.length >= 4 &&
                           _agreed)
                       ? () async {
-                            await p.login(
-                              '${_country.dial} ${_phoneCtl.text.trim()}',
-                            );
+                            // E.164 格式: +60 1172510903 → +601172510903
+                            final rawPhone = _phoneCtl.text.trim();
+                            final cleanPhone = rawPhone.replaceAll(RegExp(r'^0+'), '');
+                            final e164Phone = '${_country.dial}$cleanPhone';
+                            await p.login(e164Phone);
                             if (mounted && p.connected) {
                               Navigator.pushReplacementNamed(context, '/app');
                             }
