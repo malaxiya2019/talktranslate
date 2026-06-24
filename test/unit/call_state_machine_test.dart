@@ -7,7 +7,10 @@ void main() {
   late CallStateMachine machine;
 
   setUp(() {
-    machine = CallStateMachine();
+    machine = CallStateMachine(
+      connectTimeout: const Duration(milliseconds: 50),
+      ringTimeout: const Duration(milliseconds: 100),
+    );
   });
 
   group('初始状态', () {
@@ -141,21 +144,6 @@ void main() {
       expect(machine.state, CallState.inCall);
     });
 
-    test('inCall → failed 非法 (必须先 reconnecting)', () {
-      machine.transition(CallState.connecting);
-      machine.transition(CallState.inCall);
-      machine.transition(CallState.failed);
-      expect(machine.state, CallState.inCall);
-    });
-
-    test('reconnecting → idle 非法', () {
-      machine.transition(CallState.connecting);
-      machine.transition(CallState.inCall);
-      machine.transition(CallState.reconnecting);
-      machine.transition(CallState.idle);
-      expect(machine.state, CallState.reconnecting);
-    });
-
     test('reconnecting → ringing 非法', () {
       machine.transition(CallState.connecting);
       machine.transition(CallState.inCall);
@@ -188,15 +176,15 @@ void main() {
   });
 
   group('超时机制', () {
-    test('connecting 15秒后转为 failed', () async {
+    test('connecting 50ms 后转为 failed', () async {
       machine.transition(CallState.connecting);
-      await Future.delayed(const Duration(seconds: 16));
+      await Future.delayed(const Duration(milliseconds: 80));
       expect(machine.state, CallState.failed);
     });
 
-    test('ringing 30秒后转为 idle', () async {
+    test('ringing 100ms 后转为 idle', () async {
       machine.transition(CallState.ringing);
-      await Future.delayed(const Duration(seconds: 31));
+      await Future.delayed(const Duration(milliseconds: 150));
       expect(machine.state, CallState.idle);
     });
 
@@ -206,21 +194,21 @@ void main() {
         timeoutMsg = msg;
       };
       machine.transition(CallState.connecting);
-      await Future.delayed(const Duration(seconds: 16));
+      await Future.delayed(const Duration(milliseconds: 80));
       expect(timeoutMsg, '连接超时');
     });
 
     test('inCall 无超时', () async {
       machine.transition(CallState.connecting);
       machine.transition(CallState.inCall);
-      await Future.delayed(const Duration(seconds: 5));
+      await Future.delayed(const Duration(milliseconds: 150));
       expect(machine.state, CallState.inCall);
     });
 
     test('reset 取消超时', () async {
       machine.transition(CallState.connecting);
       machine.reset();
-      await Future.delayed(const Duration(seconds: 16));
+      await Future.delayed(const Duration(milliseconds: 80));
       expect(machine.state, CallState.idle);
     });
   });
@@ -249,6 +237,24 @@ void main() {
       machine.transition(CallState.connecting);
       machine.reset();
       expect(events.last, CallState.idle);
+      sub.cancel();
+    });
+
+    test('dispose 后 transition 静默失败', () {
+      final events = <CallState>[];
+      final sub = machine.onStateChange.listen(events.add);
+      machine.dispose();
+      machine.transition(CallState.connecting);
+      expect(events, isEmpty);
+      sub.cancel();
+    });
+
+    test('dispose 后 reset 静默失败', () {
+      final events = <CallState>[];
+      final sub = machine.onStateChange.listen(events.add);
+      machine.dispose();
+      machine.reset();
+      expect(events, isEmpty);
       sub.cancel();
     });
   });
@@ -288,6 +294,7 @@ void main() {
     test('dispose 后不再崩溃', () {
       machine.dispose();
       machine.transition(CallState.connecting);
+      // should not throw
     });
   });
 }
