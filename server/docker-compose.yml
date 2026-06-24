@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  signaling:
+    build: .
+    container_name: talktranslate-server
+    ports:
+      - "3459:3459"
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=3459
