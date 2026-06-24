@@ -252,7 +252,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 TextField(
                   controller: _serverCtl,
                   decoration: InputDecoration(
-                    hintText: .wss://3a866591.r8.cpolar.cn,
+                    hintText: 'ws://192.168.x.x:3459',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
