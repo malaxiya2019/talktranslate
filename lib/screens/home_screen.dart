@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
+import '../providers/login_provider.dart';
 import 'call_screen.dart';
 import 'settings_screen.dart';
 import 'history_screen.dart';
@@ -57,6 +58,19 @@ class _HomeScreenState extends State<HomeScreen> {
   int _logoTapCount = 0;
 
   static const _defaultServer = '';
+  final _loginProvider = LoginProvider();
+
+  @override
+  void initState() {
+    super.initState();
+    _loginProvider.addListener(_onLoginStateChanged);
+    _loginProvider.setCountryCode(_country.dial);
+    _phoneCtl.addListener(() => _loginProvider.setPhoneNumber(_phoneCtl.text));
+  }
+
+  void _onLoginStateChanged() {
+    if (mounted) setState(() {});
+  }
 
   @override
   void didChangeDependencies() {
@@ -497,15 +511,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 height: 50,
                 child: ElevatedButton(
                   onPressed:
-                      (_phoneCtl.text.trim().length >= 6 &&
-                          _codeCtl.text.length >= 4 &&
-                          _agreed)
+                      (_loginProvider.isLoginButtonEnabled &&
+                          _codeCtl.text.length >= 4)
                       ? () async {
-                            // E.164 格式: +60 1172510903 → +601172510903
-                            final rawPhone = _phoneCtl.text.trim();
-                            final cleanPhone = rawPhone.replaceAll(RegExp(r'^0+'), '');
-                            final e164Phone = '${_country.dial}$cleanPhone';
-                            await p.login(e164Phone);
+                            await _loginProvider.verifySmsCode(_codeCtl.text);
+                            await p.login(_loginProvider.e164Phone);
                             if (mounted && p.connected) {
                               Navigator.pushReplacementNamed(context, '/app');
                             }
@@ -537,7 +547,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     height: 20,
                     child: Checkbox(
                       value: _agreed,
-                      onChanged: (v) => setState(() => _agreed = v ?? false),
+                      onChanged: (v) => setState(() {
+                        _agreed = v ?? false;
+                        _loginProvider.setAgreed(_agreed);
+                      }),
                       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                   ),
@@ -640,7 +653,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         style: TextStyle(color: Colors.grey[500]),
                       ),
                       onTap: () {
-                        setState(() => _country = c);
+                        setState(() {
+                          _country = c;
+                          _loginProvider.setCountryCode(c.dial);
+                        });
                         Navigator.pop(context);
                       },
                     ),
@@ -909,6 +925,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
+    _loginProvider.removeListener(_onLoginStateChanged);
     _phoneCtl.dispose();
     _codeCtl.dispose();
     _dialCtl.dispose();
