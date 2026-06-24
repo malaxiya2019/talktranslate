@@ -104,7 +104,7 @@ class _EngineConfigScreenState extends State<EngineConfigScreen> {
           Text('选择翻译引擎', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           DropdownButtonFormField<TranslationEngine>(
-            value: _selectedEngine,
+            initialValue: _selectedEngine,
             decoration: const InputDecoration(
               border: OutlineInputBorder(),
               contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
