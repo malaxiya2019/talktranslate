@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import "package:flutter/foundation.dart";
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -300,8 +300,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: 32),
 
-              // 服务器 (可折叠) — Release 包隐藏
-              if (!kReleaseMode)
+              // 服务器配置 — 始终可见
               Container(
                 margin: const EdgeInsets.only(bottom: 16),
                 padding: const EdgeInsets.all(12),
