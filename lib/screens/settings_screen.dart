@@ -252,7 +252,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 TextField(
                   controller: _serverCtl,
                   decoration: InputDecoration(
-                    hintText: 'ws://your-server.com:3459',
+                    hintText: .wss://3a866591.r8.cpolar.cn,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -263,7 +263,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  '留空则使用 ws://192.168.x.x:3459',
+                  '留空则使用 wss://3a866591.r8.cpolar.cn',
                   style: TextStyle(fontSize: 11, color: Colors.grey[400]),
                 ),
               ],

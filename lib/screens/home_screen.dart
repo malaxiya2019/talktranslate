@@ -322,7 +322,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     TextField(
                       controller: _serverCtl,
                       decoration: InputDecoration(
-                        hintText: 'ws://your-server.com:3459',
+                        hintText: .wss://3a866591.r8.cpolar.cn,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
                           borderSide: BorderSide.none,

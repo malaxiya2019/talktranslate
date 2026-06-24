@@ -5,8 +5,10 @@ import 'signaling_service.dart';
 import 'overlay_service.dart';
 import 'call_state_machine.dart';
 import 'translation_pipeline.dart';
+import 'call_stream_manager.dart';
 import 'foreground_service.dart';
 import 'audio_focus_manager.dart';
+import 'subtitle_buffer.dart';
 
 /// 通话协调层 — 组装 WebRTC + 信令 + 状态机 + 翻译管道
 ///
@@ -15,6 +17,8 @@ class CallService {
   final SignalingService _signal;
   final CallStateMachine _stateMachine = CallStateMachine();
   final TranslationPipeline pipeline = TranslationPipeline();
+  final _subtitleBuffer = CallSubtitleBuffer();
+  final CallStreamManager streamManager = CallStreamManager();
   final _events = StreamController<Map<String, dynamic>>.broadcast();
 
   RTCPeerConnection? _pc;
@@ -46,11 +50,13 @@ class CallService {
   String get mySpeech => _mySpeech;
   String get mySpeechTranslated => _mySpeechTranslated;
 
-  static const ICE = {
+  static const Map<String, dynamic> rtcConfig = {
     'iceServers': [
       {'urls': 'stun:stun.l.google.com:19302'},
       {'urls': 'stun:stun1.l.google.com:19302'},
     ],
+    'iceTransportPolicy': 'all',
+    'sdpSemantics': 'unified-plan',
   };
 
   CallService(this._signal) {
@@ -64,6 +70,9 @@ class CallService {
     _stateMachine.onTimeout = _onTimeout;
     _stateMachine.onStateChange.listen(_onStateChange);
     pipeline.onMySpeech = _onMySpeech;
+    streamManager.onMySpeechComplete = (text, translated) {
+      _onMySpeech(text, translated);
+    };
     _setupOverlay();
   }
 
@@ -149,7 +158,8 @@ class CallService {
       _emitToast('正在重连 (${_reconnectAttempt}/$_maxAttempts)...');
       final ok = await _signal.reconnect();
       if (ok && _stateMachine.state == CallState.reconnecting) {
-        _emitToast('重连成功');
+        _emitToast("重连成功");
+        _replaySubtitleBuffer();
         await _restartIce();
         _stateMachine.transition(CallState.inCall);
       } else if (_stateMachine.state == CallState.reconnecting) {
@@ -206,7 +216,7 @@ class CallService {
   }
 
   Future<RTCPeerConnection> createPC() async {
-    _pc = await createPeerConnection(ICE, {'sdpSemantics': 'unified-plan'});
+    _pc = await createPeerConnection(rtcConfig);
     (await getLocalStream()).getTracks().forEach(
       (t) => _pc?.addTrack(t, _localStream!),
     );
@@ -348,7 +358,13 @@ class CallService {
         break;
 
       case 'subtitle':
-        _subtitle = msg['text'] as String;
+        _subtitleBuffer.push(SubtitleEntry(
+            text: msg["text"] as String? ?? "",
+            translated: msg["translated"] as String? ?? "",
+            timestamp: DateTime.now(),
+            isLocal: false,
+          ));
+        _subtitle = msg["text"] as String;
         _subtitleTranslated = (msg['translated'] as String?) ?? '';
         _events.add({
           'type': 'subtitle',
@@ -442,6 +458,22 @@ class CallService {
   }
 
   // ── 清理 ──
+
+  /// 断线重连后回放字幕缓存，避免冷启动空白
+  void _replaySubtitleBuffer() {
+    final entries = _subtitleBuffer.drain();
+    if (entries.isEmpty) return;
+    for (final entry in entries) {
+      _events.add({
+        'type': 'subtitle',
+        'text': entry.text,
+        'translated': entry.translated,
+      });
+      OverlayService().updateSubtitle(entry.text, entry.translated);
+    }
+    _emitToast('已恢复 ${entries.length} 条历史字幕');
+  }
+
 
   void _cleanupMedia() {
     pipeline.stop();

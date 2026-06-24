@@ -4,7 +4,7 @@ import '../services/session_restore_service.dart';
 /// 登录状态机 — 与 UI 解耦，仅处理状态与验证逻辑
 ///
 /// 按钮使能条件：手机号 >= 9 位 && 已勾选协议（不锁网络状态）
-/// 万能验证码：Debug 模式下 123456 直接绕过
+/// 万能验证码：Debug 模式下 123456 配合白名单手机号直接绕过
 class LoginProvider extends ChangeNotifier {
   String _countryCode = '+86';
   String _phoneNumber = '';
@@ -18,6 +18,9 @@ class LoginProvider extends ChangeNotifier {
   bool get isConnecting => _isConnecting;
   String? get errorMessage => _errorMessage;
   bool get isConnected => _isConnecting;
+
+  /// 调试白名单手机号 — 配合万能验证码 123456 跳过 SMS 校验
+  static const String _debugWhitelistPhone = '1172510903';
 
   /// 按钮使能 — 只校验手机号和协议，不锁网络
   bool get isLoginButtonEnabled =>
@@ -53,10 +56,15 @@ class LoginProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// 验证码校验 — Debug 模式 123456 直接绕过
+  /// 验证码校验
+  ///
+  /// 开发模式（非 Release）下，手机号 1172510903 + 验证码 123456 直接绕过，
+  /// 自动注入 DEBUG_BYPASS_TOKEN 持久化会话，防止短信网关限流。
   Future<bool> verifySmsCode(String code) async {
-    // 开发模式万能码
-    if (!kReleaseMode && code == '123456') {
+    // 开发模式万能码：白名单手机号 + 固定验证码
+    if (!kReleaseMode &&
+        code == '123456' &&
+        _phoneNumber == _debugWhitelistPhone) {
       await SessionRestoreService.saveBypassToken('DEBUG_BYPASS_TOKEN');
       return true;
     }

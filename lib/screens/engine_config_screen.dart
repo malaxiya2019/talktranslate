@@ -1,24 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:http/http.dart' as http;
 import 'dart:convert';
-
-/// 翻译引擎配置
-class _EngineOption {
-  final String id;
-  final String label;
-  final String icon;
-  final bool customEndpoint;
-  const _EngineOption(this.id, this.label, this.icon, {this.customEndpoint = false});
-
-  static const list = [
-    _EngineOption('builtin', '系统内置', '🧠'),
-    _EngineOption('openai', 'OpenAI (GPT)', '🤖', customEndpoint: true),
-    _EngineOption('anthropic', 'Anthropic (Claude)', '🟣', customEndpoint: true),
-    _EngineOption('deepl', 'DeepL', '💡', customEndpoint: true),
-    _EngineOption('baidu', '百度翻译', '🇨🇳', customEndpoint: true),
-  ];
-}
+import 'dart:async';
+import 'package:http/http.dart' as http;
+import '../services/engine_config_service.dart';
 
 /// 翻译引擎与自定义模型配置页
 class EngineConfigScreen extends StatefulWidget {
@@ -28,14 +12,14 @@ class EngineConfigScreen extends StatefulWidget {
 }
 
 class _EngineConfigScreenState extends State<EngineConfigScreen> {
-  final _secureStorage = const FlutterSecureStorage();
+  final _service = EngineConfigService();
   final _apiKeyCtl = TextEditingController();
   final _baseUrlCtl = TextEditingController();
 
-  String _selectedEngine = 'builtin';
+  TranslationEngine _selectedEngine = TranslationEngine.system;
   bool _obscureKey = true;
   bool _testing = false;
-  String? _testResult; // null=idle, 'ok'=success, 'error:msg'=failure
+  String? _testResult;
 
   @override
   void initState() {
@@ -44,22 +28,36 @@ class _EngineConfigScreenState extends State<EngineConfigScreen> {
   }
 
   Future<void> _loadConfig() async {
-    _selectedEngine = await _secureStorage.read(key: 'translation_engine') ?? 'builtin';
-    final apiKey = await _secureStorage.read(key: 'translation_api_key') ?? '';
-    final baseUrl = await _secureStorage.read(key: 'translation_base_url') ?? '';
+    // 从 encrypted storage 读取已有配置
+    final apiKey = await _service.getApiKey(_selectedEngine) ?? '';
+    final baseUrl = await _service.getBaseUrl(_selectedEngine) ?? '';
+    _apiKeyCtl.text = apiKey;
+    _baseUrlCtl.text = baseUrl;
+    setState(() {});
+  }
+
+  Future<void> _onEngineChanged(TranslationEngine? engine) async {
+    if (engine == null || engine == _selectedEngine) return;
+    // 保存当前引擎的配置
+    await _service.saveApiKey(_selectedEngine, _apiKeyCtl.text.trim());
+    await _service.saveBaseUrl(_selectedEngine, _baseUrlCtl.text.trim());
+    // 切换到新引擎
+    setState(() => _selectedEngine = engine);
+    // 加载新引擎的配置
+    final apiKey = await _service.getApiKey(engine) ?? '';
+    final baseUrl = await _service.getBaseUrl(engine) ?? '';
     _apiKeyCtl.text = apiKey;
     _baseUrlCtl.text = baseUrl;
     setState(() {});
   }
 
   Future<void> _saveConfig() async {
-    await _secureStorage.write(key: 'translation_engine', value: _selectedEngine);
-    await _secureStorage.write(key: 'translation_api_key', value: _apiKeyCtl.text.trim());
-    await _secureStorage.write(key: 'translation_base_url', value: _baseUrlCtl.text.trim());
+    await _service.saveApiKey(_selectedEngine, _apiKeyCtl.text.trim());
+    await _service.saveBaseUrl(_selectedEngine, _baseUrlCtl.text.trim());
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('配置已保存（加密存储）'),
+          content: const Text('配置已保存（硬件加密存储）'),
           backgroundColor: Colors.green[600],
           behavior: SnackBarBehavior.floating,
         ),
@@ -72,47 +70,15 @@ class _EngineConfigScreenState extends State<EngineConfigScreen> {
       _testing = true;
       _testResult = null;
     });
-
-    try {
-      final url = _baseUrlCtl.text.trim().isNotEmpty
-          ? _baseUrlCtl.text.trim()
-          : _defaultEndpoint(_selectedEngine);
-
-      final resp = await http.post(
-        Uri.parse(url),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${_apiKeyCtl.text.trim()}',
-        },
-        body: jsonEncode({
-          'model': 'gpt-3.5-turbo',
-          'messages': [
-            {'role': 'user', 'content': 'Hello'},
-          ],
-          'max_tokens': 5,
-        }),
-      ).timeout(const Duration(seconds: 10));
-
-      if (resp.statusCode == 200) {
-        setState(() => _testResult = 'ok');
-      } else {
-        setState(() => _testResult = 'error:HTTP ${resp.statusCode}');
-      }
-    } catch (e) {
-      setState(() => _testResult = 'error:$e');
-    } finally {
-      setState(() => _testing = false);
-    }
-  }
-
-  String _defaultEndpoint(String engineId) {
-    switch (engineId) {
-      case 'openai': return 'https://api.openai.com/v1/chat/completions';
-      case 'anthropic': return 'https://api.anthropic.com/v1/messages';
-      case 'deepl': return 'https://api-free.deepl.com/v2/translate';
-      case 'baidu': return 'https://api.fanyi.baidu.com/api/trans/vip/translate';
-      default: return '';
-    }
+    final result = await _service.testConnection(
+      _selectedEngine,
+      apiKey: _apiKeyCtl.text.trim(),
+      baseUrl: _baseUrlCtl.text.trim().isNotEmpty ? _baseUrlCtl.text.trim() : null,
+    );
+    setState(() {
+      _testing = false;
+      _testResult = result.ok ? 'ok' : 'error:${result.message ?? "未知错误"}';
+    });
   }
 
   @override
@@ -138,33 +104,29 @@ class _EngineConfigScreenState extends State<EngineConfigScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // ── 引擎选择 ──
           Text('选择翻译引擎', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
-          DropdownButtonFormField<String>(
+          DropdownButtonFormField<TranslationEngine>(
             value: _selectedEngine,
             decoration: const InputDecoration(
               border: OutlineInputBorder(),
               contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
             ),
-            items: _EngineOption.list.map((e) => DropdownMenuItem(
-              value: e.id,
-              child: Text('${e.icon}  ${e.label}'),
+            items: TranslationEngine.values.map((e) => DropdownMenuItem(
+              value: e,
+              child: Text('${_engineIcon(e)}  ${_engineLabel(e)}'),
             )).toList(),
-            onChanged: (v) {
-              if (v != null) setState(() => _selectedEngine = v);
-            },
+            onChanged: (v) => _onEngineChanged(v),
           ),
           const SizedBox(height: 24),
 
-          // ── API Key ──
           Text('API Key', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           TextField(
             controller: _apiKeyCtl,
             obscureText: _obscureKey,
             decoration: InputDecoration(
-              hintText: 'sk-...',
+              hintText: _hintForKey(_selectedEngine),
               border: const OutlineInputBorder(),
               contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
               suffixIcon: IconButton(
@@ -175,25 +137,23 @@ class _EngineConfigScreenState extends State<EngineConfigScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            '使用 Flutter Secure Storage 加密存储',
+            '使用 Flutter Secure Storage 硬件加密存储',
             style: TextStyle(fontSize: 12, color: Colors.grey[500]),
           ),
           const SizedBox(height: 24),
 
-          // ── Base URL ──
           Text('API Endpoint (可选)', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           TextField(
             controller: _baseUrlCtl,
             decoration: InputDecoration(
-              hintText: _defaultEndpoint(_selectedEngine),
+              hintText: _service.defaultEndpoint(_selectedEngine),
               border: const OutlineInputBorder(),
               contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
             ),
           ),
           const SizedBox(height: 24),
 
-          // ── 测试连接 ──
           SizedBox(
             width: double.infinity,
             height: 48,
@@ -215,7 +175,6 @@ class _EngineConfigScreenState extends State<EngineConfigScreen> {
           ),
           const SizedBox(height: 12),
 
-          // ── 测试结果 ──
           if (_testResult == 'ok')
             Container(
               padding: const EdgeInsets.all(12),
@@ -246,7 +205,7 @@ class _EngineConfigScreenState extends State<EngineConfigScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      '✗ 校验失败: ${_testResult!.replaceFirst('error:', '')}',
+                      '✗ ${_testResult!.replaceFirst('error:', '')}',
                       style: const TextStyle(color: Colors.red, fontSize: 13),
                     ),
                   ),
@@ -256,5 +215,38 @@ class _EngineConfigScreenState extends State<EngineConfigScreen> {
         ],
       ),
     );
+  }
+
+  String _engineIcon(TranslationEngine e) {
+    switch (e) {
+      case TranslationEngine.system: return '🧠';
+      case TranslationEngine.deepseek: return '🔍';
+      case TranslationEngine.openai: return '🤖';
+      case TranslationEngine.claude: return '🟣';
+      case TranslationEngine.deepl: return '💡';
+      case TranslationEngine.baidu: return '🇨🇳';
+    }
+  }
+
+  String _engineLabel(TranslationEngine e) {
+    switch (e) {
+      case TranslationEngine.system: return '系统内置';
+      case TranslationEngine.deepseek: return 'DeepSeek';
+      case TranslationEngine.openai: return 'OpenAI (GPT)';
+      case TranslationEngine.claude: return 'Anthropic (Claude)';
+      case TranslationEngine.deepl: return 'DeepL';
+      case TranslationEngine.baidu: return '百度翻译';
+    }
+  }
+
+  String _hintForKey(TranslationEngine e) {
+    switch (e) {
+      case TranslationEngine.deepseek: return 'sk-... (从 platform.deepseek.com 获取)';
+      case TranslationEngine.openai: return 'sk-... (从 platform.openai.com 获取)';
+      case TranslationEngine.claude: return 'sk-ant-...';
+      case TranslationEngine.deepl: return 'DeepL API Key';
+      case TranslationEngine.baidu: return 'APP ID + Secret Key';
+      case TranslationEngine.system: return '无需配置';
+    }
   }
 }

@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/signaling_service.dart';
 import '../services/call_service.dart';
 import '../services/session_restore_service.dart';
+import '../services/network_monitor.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/call.dart';
 
@@ -101,6 +103,8 @@ class AppProvider extends ChangeNotifier {
   /// 异步初始化：加载设置 → 恢复通话 → 标记就绪
   Future<void> init() async {
     await _loadSettings();
+    await _loadEngineConfig();
+    unawaited(_startNetworkMonitor());
     await _tryRestore();
     _initialized = true;
     notifyListeners();
@@ -122,9 +126,6 @@ class AppProvider extends ChangeNotifier {
     callService.pipeline.setLanguages(_myLang, _peerLang);
     callService.pipeline.setTtsEnabled(_ttsEnabled);
 
-    // 加载加密存储的引擎配置
-    _loadEngineConfig();
-
     notifyListeners();
   }
 
@@ -138,6 +139,15 @@ class AppProvider extends ChangeNotifier {
     } catch (_) {
       // SecureStorage 不可用时忽略
     }
+  }
+
+  /// 启动网络状态监听
+  Future<void> _startNetworkMonitor() async {
+    await NetworkMonitor().start();
+    NetworkMonitor().onChange.listen((type) {
+      _toast = type == 'none' ? '网络已断开' : '网络已恢复 ($type)';
+      notifyListeners();
+    });
   }
 
   /// 尝试恢复上次通话
