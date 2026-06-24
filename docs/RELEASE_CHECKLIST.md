@@ -84,7 +84,7 @@ flutter build appbundle --release
 
 | 检查项 | 要求 | 状态 |
 |--------|------|------|
-| minSdk | 23 (Android 6.0) | ✅ 已配置 |
+| minSdk | 24 (Android 7.0) | ✅ 已配置 |
 | targetSdk | 34 (Android 14) | ✅ |
 | 32-bit abi | armeabi-v7a | ✅ split-per-abi |
 | 64-bit abi | arm64-v8a | ✅ split-per-abi |

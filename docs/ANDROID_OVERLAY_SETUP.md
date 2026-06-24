@@ -70,7 +70,7 @@ flutter pub get
 
 ```groovy
 defaultConfig {
-    minSdk 23        // Android 6.0+ (悬浮窗必需)
+    minSdk 24        // Android 6.0+ (悬浮窗必需)
     targetSdk 34     // 推荐 >= 33
 }
 ```

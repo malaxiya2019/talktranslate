@@ -49,7 +49,7 @@ android {
 
     defaultConfig {
         applicationId "com.talktranslate.talktranslate"
-        minSdk 23
+        minSdk 24
         targetSdk flutter.targetSdkVersion
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
