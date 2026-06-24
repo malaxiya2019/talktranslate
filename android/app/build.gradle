@@ -87,4 +87,21 @@ flutter {
 }
 
 dependencies {
+    constraints {
+        implementation("org.jetbrains.kotlin:kotlin-stdlib") {
+            version {
+                strictly(kotlin_version)
+            }
+        }
+        implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7") {
+            version {
+                strictly(kotlin_version)
+            }
+        }
+        implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8") {
+            version {
+                strictly(kotlin_version)
+            }
+        }
+    }
 }
