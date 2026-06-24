@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'providers/app_provider.dart';
+import 'screens/settings_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/app_shell.dart';
 
@@ -23,6 +25,13 @@ class TalkTranslateApp extends StatelessWidget {
         title: 'TalkTranslate v2',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(colorSchemeSeed: Colors.blue, useMaterial3: true),
+        locale: provider.locale,
+        supportedLocales: AppLanguage.supportedLocales,
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
         initialRoute: '/',
         routes: {
           '/': (_) => const HomeScreen(),

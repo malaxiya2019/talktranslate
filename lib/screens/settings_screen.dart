@@ -5,6 +5,8 @@ import 'engine_config_screen.dart';
 
 /// 支持的语言
 class AppLanguage {
+  static List<Locale> get supportedLocales =>
+      list.map((l) => Locale(l.code.split('-')[0], l.code.split('-')[1])).toList();
   final String code;
   final String name;
   final String flag;

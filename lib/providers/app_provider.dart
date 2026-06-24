@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'dart:ui' show Locale;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/signaling_service.dart';
 import '../services/call_service.dart';
@@ -37,6 +38,14 @@ class AppProvider extends ChangeNotifier {
   String get apiKey => _apiKey;
 
   // ── 语言 ──
+  Locale _locale = const Locale('zh', 'CN');
+  Locale get locale => _locale;
+
+  void setLocale(Locale locale) {
+    _locale = locale;
+    notifyListeners();
+  }
+
   String _myLang = 'zh-CN';
   String get myLang => _myLang;
   String _peerLang = 'en-US';

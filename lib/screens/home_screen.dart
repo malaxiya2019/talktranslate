@@ -634,7 +634,9 @@ class _HomeScreenState extends State<HomeScreen> {
         title: const Text('选择语言 / Select Language'),
         children: AppLanguage.list.map((lang) => SimpleDialogOption(
           onPressed: () {
-            // TODO: 应用语言切换
+            context.read<AppProvider>().setLocale(
+              Locale(lang.code.split('-')[0], lang.code.split('-')[1])
+            );
             Navigator.pop(ctx);
           },
           child: Row(
