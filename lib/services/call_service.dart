@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:core';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import '../models/call.dart';
 import 'signaling_service.dart';
@@ -19,6 +20,7 @@ class CallService {
   final TranslationPipeline pipeline = TranslationPipeline();
   final _subtitleBuffer = CallSubtitleBuffer();
   final CallStreamManager streamManager = CallStreamManager();
+  Timer? _fgTimer;
   final _events = StreamController<Map<String, dynamic>>.broadcast();
 
   RTCPeerConnection? _pc;
@@ -28,6 +30,12 @@ class CallService {
   String? _peerPhone;
 
   DateTime? _callStartTime;
+  String _formatDuration(Duration d) {
+    final h = d.inHours.toString().padLeft(2, '0');
+    final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return h == '00' ? '$m:$s' : '$h:$m:$s';
+  }
 
   // ── 公开访问 ──
 
@@ -99,6 +107,11 @@ class CallService {
         break;
       case CallState.inCall:
         _callStartTime = DateTime.now();
+        _fgTimer?.cancel();
+        _fgTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+          final dur = DateTime.now().difference(_callStartTime!);
+          ForegroundService().update(_peerPhone ?? '通话中', _formatDuration(dur));
+        });
         OverlayService().prepare(
           CallSession(
             peerName: _peerPhone ?? '未知',
@@ -171,6 +184,8 @@ class CallService {
   void _cancelAllTimers() {
     _reconnectTimer?.cancel();
     _reconnectTimer = null;
+    _fgTimer?.cancel();
+    _fgTimer = null;
     _reconnectAttempt = 0;
   }
 

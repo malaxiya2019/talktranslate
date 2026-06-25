@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
 import '../providers/login_provider.dart';
+import '../widgets/language_selector_bottom_sheet.dart';
 import 'call_screen.dart';
 import 'settings_screen.dart';
 import 'history_screen.dart';
@@ -638,29 +639,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// 语言切换弹窗
   void _showLanguagePicker(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (ctx) => SimpleDialog(
-        title: const Text('选择语言 / Select Language'),
-        children: AppLanguage.list.map((lang) => SimpleDialogOption(
-          onPressed: () {
-            context.read<AppProvider>().setLocale(
-              Locale(lang.code.split('-')[0], lang.code.split('-')[1])
-            );
-            Navigator.pop(ctx);
-          },
-          child: Row(
-            children: [
-              Text(lang.flag, style: const TextStyle(fontSize: 20)),
-              const SizedBox(width: 12),
-              Text(lang.name, style: const TextStyle(fontSize: 15)),
-              const SizedBox(width: 8),
-              Text(lang.code, style: TextStyle(fontSize: 12, color: Colors.grey[500])),
-            ],
-          ),
-        )).toList(),
-      ),
-    );
+    LanguageSelectorBottomSheet.show(context);
   }
 
   /// 开发者模式弹窗 — 连续点击 Logo 5 次触发

@@ -152,4 +152,15 @@ class EngineConfigService {
         return 'deepseek-chat';
     }
   }
+
+  // ── 目标语言管理 ──
+
+  String _targetLanguage = 'en-US';
+
+  String get targetLanguage => _targetLanguage;
+
+  /// 设置翻译引擎的目标语言（对方听到的语言）
+  void setTargetLanguage(String lang) {
+    _targetLanguage = lang;
+  }
 }

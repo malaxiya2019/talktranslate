@@ -1,21 +1,14 @@
-# TalkTranslate — Android 悬浮窗集成指南
+# TalkTranslate — Android 保活 & 悬浮窗集成指南
 
-## ⚠️ 先检查：Android 目录是否已存在
-
-```bash
-ls android/app/src/main/AndroidManifest.xml
-```
-
-- **有输出** → 已有 Android 项目，跳到第 ② 步
-- **无输出** → 缺失 Android 文件，执行：
-
-```bash
-# 安全创建 — 仅补缺失文件，不覆盖已有的自定义内容
-flutter create --platforms=android .
-# 然后手动 merge 本指南中的配置
-```
-
-> **不要盲目运行 `flutter create`** — 它会覆盖 `AndroidManifest.xml`、`build.gradle` 等自定义文件。
+## 目录
+- [① 获取依赖](#①-获取依赖)
+- [② 权限检查清单](#②-权限检查清单)
+- [③ 前台服务保活配置](#③-前台服务保活配置)
+- [④ 运行时权限](#④-运行时权限)
+- [⑤ 电池优化白名单](#⑤-电池优化白名单)
+- [⑥ 构建并运行](#⑥-构建并运行)
+- [国产 ROM 注意事项](#国产-rom-注意事项)
+- [诊断](#诊断)
 
 ---
 
@@ -42,12 +35,34 @@ flutter pub get
 <!-- 悬浮窗核心 -->
 <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
 
-<!-- 前台服务保活 -->
+<!-- 前台服务保活（Android 14+ 类型精确匹配） -->
 <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE"/>
 <uses-permission android:name="android.permission.FOREGROUND_SERVICE_COMMUNICATION"/>
 
-<!-- Android 13+ 通知 -->
+<!-- Android 13+ 通知权限 -->
 <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+
+<!-- 电池优化白名单引导 -->
+<uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>
+```
+
+### ✅ 前台服务声明
+
+通话保活服务（类型匹配实际用途：麦克风 + 通信）：
+```xml
+<service
+    android:name=".CallForegroundService"
+    android:exported="false"
+    android:foregroundServiceType="microphone|communication"/>
+```
+
+悬浮窗服务：
+```xml
+<service
+    android:name=".OverlayService"
+    android:exported="false"
+    android:foregroundServiceType="mediaProjection"/>
 ```
 
 ### ✅ FlutterOverlayWindow Activity
@@ -64,54 +79,89 @@ flutter pub get
 
 ---
 
-## ③ Gradle 版本检查
+## ③ 前台服务保活配置
 
-`android/app/build.gradle`:
+### 保活策略
 
-```groovy
-defaultConfig {
-    minSdk 24        // Android 6.0+ (悬浮窗必需)
-    targetSdk 34     // 推荐 >= 33
-}
+TalkTranslate 使用三层保活机制：
+
+| 层 | 机制 | 说明 |
+|----|------|------|
+| 1 | `startForeground()` 持久通知 | Android 8+ 必须显示通知才能存活 |
+| 2 | `START_STICKY` | 被系统杀死后自动重建服务 |
+| 3 | `onTaskRemoved()` | 用户滑动杀任务后尝试自启 |
+
+### 通话通知
+
+通话启动后，通知栏显示：
+
+```
+TalkTranslate · 张三
+📞 通话中 03:25
+```
+
+点击通知回到通话界面。
+
+### Flutter 端生命周期
+
+```
+CallState.inCall  → ForegroundService().start()  → 前台服务启动
+每秒 tick         → ForegroundService().update() → 通知更新时间
+CallState.idle    → ForegroundService().stop()   → 前台服务停止
 ```
 
 ---
 
-## ④ 运行时权限（关键）
+## ④ 运行时权限
 
-Android 10+ 需要**运行时动态请求**悬浮窗权限。TalkTranslate 已集成在 `OverlayService.show()` 中：
+### 悬浮窗权限
+
+Android 10+ 需要运行时动态请求。TalkTranslate 已集成：
 
 ```dart
-// lib/services/overlay_service.dart 中
+// 自动请求
 await FlutterOverlayWindow.requestPermission();
 ```
 
-如果首次授权失败，引导用户手动开启：
+### 通知权限 (Android 13+)
+
+应用启动后在设置页的"保活设置"卡片中可一键请求，或在代码中：
 
 ```dart
-// 检查是否有悬浮窗权限
-import 'package:flutter_overlay_window/flutter_overlay_window.dart';
-
-if (!await FlutterOverlayWindow.isPermissionGranted()) {
-  // 引导用户去设置
-  await FlutterOverlayWindow.requestPermission();
-}
+await ForegroundService().requestNotificationPermission();
 ```
 
 ---
 
-## ⑤ 前台服务声明（防杀保活）
+## ⑤ 电池优化白名单
 
-如果使用前台服务，在 `<application>` 内添加：
+### 为什么需要
 
-```xml
-<service
-    android:name=".OverlayService"
-    android:exported="false"
-    android:foregroundServiceType="mediaProjection"/>
+Android 6+ 的 Doze 模式会在后台杀死应用进程。加入白名单后，通话期间不会被系统中断。
+
+### 设置页操作
+
+1. 打开 App → 设置页
+2. 找到 **"🔋 保活设置"** 卡片
+3. 如果显示 ❌，点击 **"修复"** 按钮
+4. 在弹出的系统设置中开启"允许后台运行"
+
+### 代码调用
+
+```dart
+ForegroundService().requestBatteryOptimizationWhitelist();
 ```
 
-> **注意**：`flutter_overlay_window` 内部已管理前台服务，此项为可选增强。
+### 国产 ROM 额外步骤
+
+部分国产 ROM 即使加入系统白名单仍可能杀进程，需手动添加：
+
+| 品牌 | 路径 |
+|------|------|
+| 小米 | 设置 → 应用 → TalkTranslate → **省电策略 → 无限制** |
+| 华为 | 设置 → 应用 → 应用启动管理 → TalkTranslate → **手动管理 → 全部允许** |
+| OPPO | 设置 → 应用管理 → TalkTranslate → **省电 → 允许后台运行** |
+| VIVO | 设置 → 电池 → 后台耗电管理 → TalkTranslate → **允许后台运行** |
 
 ---
 
@@ -130,29 +180,22 @@ flutter run
 | 权限 | 用途 | 级别 |
 |------|------|------|
 | `SYSTEM_ALERT_WINDOW` | 悬浮窗覆盖 | 🔴 必需 |
-| `FOREGROUND_SERVICE` | 后台保活 | 🟡 建议 |
-| `POST_NOTIFICATIONS` | Android 13+ 通知 | 🟡 建议 |
+| `FOREGROUND_SERVICE` | 后台保活 | 🔴 必需 |
+| `FOREGROUND_SERVICE_MICROPHONE` | Android 14+ 麦克风类型声明 | 🔴 必需 |
+| `POST_NOTIFICATIONS` | Android 13+ 通知 | 🔴 必需 |
+| `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` | 电池白名单引导 | 🟡 建议 |
 | `RECORD_AUDIO` | WebRTC 麦克风 | 🔴 必需 |
 | `INTERNET` | 网络通信 | 🔴 必需 |
 | `ACCESS_NETWORK_STATE` | 网络状态检测 | 🟢 推荐 |
 
 ---
 
-## 国产 ROM 注意事项
-
-| 品牌 | 路径 |
-|------|------|
-| 小米 | 设置 → 应用 → TalkTranslate → 显示悬浮窗 → 开启 |
-| 华为 | 设置 → 应用 → 权限 → 悬浮窗 → TalkTranslate → 开启 |
-| OPPO/VIVO | 设置 → 应用管理 → TalkTranslate → 悬浮窗 → 开启 |
-
----
-
-## 诊断：如果悬浮窗不显示
+## 诊断：如果通话被杀死
 
 ```
-1. 检查 AndroidManifest 是否包含 SYSTEM_ALERT_WINDOW
-2. 检查 minSdk >= 23
-3. 检查应用权限设置中"悬浮窗"是否已开启
-4. adb logcat | grep Overlay 查看错误日志
+1. 检查 AndroidManifest 是否包含 FOREGROUND_SERVICE + POST_NOTIFICATIONS
+2. 检查 foregroundServiceType 是否为 "microphone|communication"
+3. 打开设置页 → 保活设置 → 确认 ✅ 通知权限 + ✅ 电池白名单
+4. 检查国产 ROM 的"受保护应用"列表
+5. adb logcat | grep -E 'CallForeground|Overlay|talktranslate' 查看日志
 ```

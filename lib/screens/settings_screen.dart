@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
+import '../providers/app_language_provider.dart';
 import 'engine_config_screen.dart';
+import '../services/keep_alive_helper.dart';
 
 /// 支持的语言
 class AppLanguage {
@@ -296,6 +298,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
 
+
+          const SizedBox(height: 24),
+
+          // ── 保活 ──
+          _sectionHeader("🔋 保活设置", "防止系统杀后台通话进程"),
+          const SizedBox(height: 8),
+          _KeepAliveCard(),
           const SizedBox(height: 32),
 
           // ── 版本 ──
@@ -425,10 +434,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           : null,
                       onTap: () {
                         setState(() {
-                          if (isMyLang)
+                          if (isMyLang) {
                             _myLang = lang;
-                          else
+                            context.read<AppLanguageProvider>().changeLanguage(lang.code);
+                          } else {
                             _peerLang = lang;
+                          }
                         });
                         Navigator.pop(context);
                       },
@@ -437,6 +448,120 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   .toList(),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+/// 保活状态卡片 — 显示在设置页底部
+class _KeepAliveCard extends StatefulWidget {
+  @override
+  _KeepAliveCardState createState() => _KeepAliveCardState();
+}
+
+class _KeepAliveCardState extends State<_KeepAliveCard> {
+  KeepAliveStatus? _status;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _check();
+  }
+
+  Future<void> _check() async {
+    setState(() => _loading = true);
+    final status = await KeepAliveHelper().check();
+    if (mounted) setState(() { _status = status; _loading = false; });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      padding: const EdgeInsets.all(16),
+      child: _loading
+          ? const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)))
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _tile(
+                  icon: Icons.notifications_outlined,
+                  label: '通知权限 (Android 13+)',
+                  ok: _status!.notificationOk,
+                  onTap: _status!.notificationOk ? null : () async {
+                    await KeepAliveHelper().requestNotification();
+                    await _check();
+                  },
+                ),
+                const Divider(height: 20),
+                _tile(
+                  icon: Icons.battery_std_outlined,
+                  label: '电池优化白名单',
+                  ok: _status!.batteryOk,
+                  subtitle: '国产 ROM 还需手动加入"受保护应用"',
+                  onTap: _status!.batteryOk ? null : () async {
+                    await KeepAliveHelper().requestBatteryWhitelist();
+                    await _check();
+                  },
+                ),
+                if (_status!.missingCount > 0) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    '⚠️ 有 ${_status!.missingCount} 项未配置，后台通话可能被系统杀死',
+                    style: TextStyle(fontSize: 12, color: Colors.orange[700]),
+                  ),
+                ],
+                if (_status!.allOk) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    '✅ 保活配置完成',
+                    style: TextStyle(fontSize: 12, color: Colors.green[600]),
+                  ),
+                ],
+              ],
+            ),
+    );
+  }
+
+  Widget _tile({
+    required IconData icon,
+    required String label,
+    required bool ok,
+    String? subtitle,
+    VoidCallback? onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: ok ? Colors.green : Colors.orange),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(fontSize: 14, color: ok ? Colors.grey[600] : Colors.grey[800]),
+                ),
+                if (subtitle != null)
+                  Text(subtitle, style: TextStyle(fontSize: 11, color: Colors.grey[400])),
+              ],
+            ),
+          ),
+          if (ok)
+            const Icon(Icons.check_circle, size: 18, color: Colors.green)
+          else if (onTap != null)
+            TextButton(
+              onPressed: onTap,
+              child: Text('修复', style: TextStyle(fontSize: 12, color: Colors.blue[600])),
+            ),
         ],
       ),
     );

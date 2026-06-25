@@ -11,10 +11,18 @@ import android.os.IBinder
 import androidx.core.app.NotificationCompat
 
 /**
- * 通话前台服务 — 防止 Android 10+ 杀后台进程
+ * 通话前台服务 — 防止 Android 杀后台通话进程
  *
- * 通话中启动，挂断后停止。
- * 显示持久通知："TalkTranslate 通话中..."
+ * ── 保活策略 ──
+ * 1. startForeground() 持久通知（Android 8+ 必须）
+ * 2. START_STICKY 重启（被杀死后自动重建）
+ * 3. foregroundServiceType="microphone|communication"（Android 14+ 合规）
+ * 4. onTaskRemoved() + onDestroy() 双重清理保障
+ *
+ * ── 生命周期 ──
+ * CallState.inCall  → ACTION_START  → startForeground()
+ * 每秒 tick         → ACTION_UPDATE → manager.notify()
+ * CallState.idle    → ACTION_STOP   → stopForeground() + stopSelf()
  */
 class CallForegroundService : Service() {
 
@@ -38,12 +46,13 @@ class CallForegroundService : Service() {
         when (intent?.action) {
             ACTION_START -> {
                 val peer = intent.getStringExtra(EXTRA_PEER) ?: "通话中"
-                startForeground(NOTIFICATION_ID, buildNotification(peer, "00:00"))
+                startForeground(NOTIFICATION_ID, buildNotification(peer, "00:00", "已连接"))
             }
             ACTION_UPDATE -> {
                 val peer = intent.getStringExtra(EXTRA_PEER) ?: "通话中"
                 val duration = intent.getStringExtra(EXTRA_DURATION) ?: "00:00"
-                val notification = buildNotification(peer, duration)
+                val status = intent.getStringExtra(EXTRA_STATUS) ?: "通话中"
+                val notification = buildNotification(peer, duration, status)
                 val manager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
                 manager.notify(NOTIFICATION_ID, notification)
             }
@@ -52,10 +61,29 @@ class CallForegroundService : Service() {
                 stopSelf()
             }
         }
+        // START_STICKY: 被系统杀死后自动重建（但不保留 Intent）
         return START_STICKY
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
+
+    /**
+     * 用户滑动杀掉任务时，通知 Flutter 层重新启动服务
+     */
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        // 重启服务的 Intent
+        val restartIntent = Intent(this, CallForegroundService::class.java).apply {
+            action = ACTION_START
+            putExtra(EXTRA_PEER, "重新连接中")
+        }
+        // Android 14+ 需要 FLAG_IMMUTABLE
+        val pendingIntent = PendingIntent.getService(
+            this, 0, restartIntent,
+            PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
+        )
+        pendingIntent.send()
+        super.onTaskRemoved(rootIntent)
+    }
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -72,23 +100,26 @@ class CallForegroundService : Service() {
         }
     }
 
-    private fun buildNotification(peer: String, duration: String): Notification {
-        val openIntent = packageManager.getLaunchIntentForPackage(packageName)
+    private fun buildNotification(peer: String, duration: String, status: String): Notification {
+        // 点击通知回到 App（使用 launchIntent 确保 Activity 恢复而非重建）
+        val launchIntent = packageManager.getLaunchIntentForPackage(packageName)?.apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+        }
         val openPendingIntent = PendingIntent.getActivity(
-            this, 0, openIntent,
+            this, 0, launchIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val status = peer // 实际传入了 "已连接" 等状态文字
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("TalkTranslate")
-            .setContentText("正在与 $peer 通话 · $duration")
-            .setSubText("[$status]")
+            .setContentTitle("TalkTranslate · $peer")
+            .setContentText("📞 通话中 $duration")
+            .setSubText(status)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setOngoing(true)
             .setContentIntent(openPendingIntent)
             .setSilent(true)
+            .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .build()
     }
 }

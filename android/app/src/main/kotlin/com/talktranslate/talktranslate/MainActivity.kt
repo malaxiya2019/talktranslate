@@ -12,6 +12,8 @@ import android.net.NetworkRequest
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.os.PowerManager
+import android.provider.Settings
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodCall
@@ -22,6 +24,7 @@ class MainActivity : FlutterActivity() {
     private val SERVICE_CHANNEL = "talktranslate/foreground_service"
     private val AUDIO_FOCUS_CHANNEL = "talktranslate/audio_focus"
     private val NETWORK_CHANNEL = "talktranslate/network_state"
+    private val PLATFORM_CHANNEL = "talktranslate/platform"
 
     private var audioFocusRequest: AudioFocusRequest? = null
     private lateinit var audioManager: AudioManager
@@ -88,6 +91,43 @@ class MainActivity : FlutterActivity() {
                     else -> result.notImplemented()
                 }
             }
+
+        // ── 平台能力：权限 + 电池优化 ──
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, PLATFORM_CHANNEL)
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "requestNotificationPermission" -> {
+                        // Android 13+ 需要运行时请求 POST_NOTIFICATIONS
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 9001)
+                        }
+                        result.success(true)
+                    }
+                    "hasNotificationPermission" -> {
+                        val granted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) ==
+                                    android.content.pm.PackageManager.PERMISSION_GRANTED
+                        } else {
+                            true // Android 12- 无需运行时权限
+                        }
+                        result.success(granted)
+                    }
+                    "isIgnoringBatteryOptimizations" -> {
+                        val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
+                        result.success(pm.isIgnoringBatteryOptimizations(packageName))
+                    }
+                    "requestBatteryOptimizationWhitelist" -> {
+                        val intent = Intent(
+                            Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+                            android.net.Uri.parse("package:$packageName")
+                        )
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        startActivity(intent)
+                        result.success(true)
+                    }
+                    else -> result.notImplemented()
+                }
+            }
     }
 
     // ── Foreground Service Helpers ──
@@ -120,9 +160,11 @@ class MainActivity : FlutterActivity() {
     }
 
     private fun bringAppToForeground() {
-        val intent = packageManager.getLaunchIntentForPackage(packageName)
-        intent?.flags = Intent.FLAG_ACTIVITY_NEW_TASK or
-                Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+        // 使用 FLAG_ACTIVITY_REORDER_TO_FRONT：如果 Activity 已在栈中，直接提到前台
+        // 避免 getLaunchIntentForPackage 重新创建实例
+        val intent = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+        }
         startActivity(intent)
     }
 
