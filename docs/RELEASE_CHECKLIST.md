@@ -1,28 +1,22 @@
 # TalkTranslate Release Checklist
 
-## ⬜ 1. 版本号更新
+## ✅ 1. 版本号更新
 
-- [ ] `pubspec.yaml` — `version: 2.0.0+1` → 新版本号
-- [ ] `android/app/build.gradle` — `versionName` 同步
-- [ ] `README.md` — 更新版本号
+- [x] `pubspec.yaml` — `version: 2.0.1+2` → `2.0.2+3`
+- [x] `android/local.properties` — `flutter.versionName=2.0.2`, `flutter.versionCode=3`
+- [x] `README.md` — 更新版本号
 
-## ⬜ 2. Android 签名配置
+## ✅ 2. Android 签名配置
 
-```bash
-# 生成 keystore
-keytool -genkey -v -keystore android/app/upload-keystore.jks \
-  -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+- [x] 生成 keystore（`android/app/upload-keystore.jks`，RSA 2048，10000天）
+- [x] 填写 `key.properties`（已在 `.gitignore` 中）
+- [ ] CI secrets: `KEYSTORE_BASE64`, `KEY_STORE_PASSWORD`, `KEY_PASSWORD`, `KEY_ALIAS`
+  - 配置指南见 [SIGNING_SETUP.md](SIGNING_SETUP.md)
+  - 需手动在 https://github.com/malaxiya2019/talktranslate/settings/secrets/actions 添加
 
-# 填写 android/key.properties
-```
+## ✅ 3. 权限检查
 
-- [x] 生成 keystore
-- [x] 填写 `key.properties`（已在 .gitignore 中）
-- [ ] CI secrets: `KEYSTORE_BASE64`, `KEY_STORE_PASSWORD`, `KEY_PASSWORD`, `KEY_ALIAS` （需要手动在 GitHub 网页设置）
-
-## ⬜ 3. 权限检查
-
-- [ ] `AndroidManifest.xml` 权限齐全
+- [x] `AndroidManifest.xml` 权限齐全
   - `SYSTEM_ALERT_WINDOW`
   - `FOREGROUND_SERVICE`
   - `POST_NOTIFICATIONS`（Android 13+）
@@ -30,36 +24,32 @@ keytool -genkey -v -keystore android/app/upload-keystore.jks \
   - `INTERNET`
   - `ACCESS_NETWORK_STATE`
 
-## ✅ 4. 代码审查修复 (v2.0.1)
+## ✅ 4. 代码审查修复
 
-本次代码审查已修复以下问题：
-
-| # | 问题 | 文件 | 状态 |
-|---|------|------|:----:|
-| 1 | 通话记录在超时/失败路径下不保存 | `call_service.dart` | ✅ 已修复 |
-| 2 | 通话页语言标签硬编码为中文/英文 | `call_screen.dart` | ✅ 改为动态语言选择 |
-| 3 | WebSocket Stream 缺少 onError 处理器 | `signaling_service.dart` | ✅ 已添加 |
-| 4 | 翻译 HTTP 请求无超时限制 | `translation_service.dart` | ✅ 添加 15s 超时 |
-| 5 | "新建通话"按钮 onTap 为空 | `home_screen.dart` | ✅ 添加拨号对话框 |
+| # | 问题 | 状态 |
+|---|------|:----:|
+| 1 | 通话记录在超时/失败路径下不保存 | ✅ |
+| 2 | 通话页语言标签硬编码 | ✅ |
+| 3 | WebSocket Stream 缺少 onError | ✅ |
+| 4 | 翻译 HTTP 请求无超时限制 | ✅ |
+| 5 | "新建通话"按钮 onTap 为空 | ✅ |
 
 ## ⬜ 5. 构建验证
 
 ```bash
 flutter clean
 flutter pub get
-flutter analyze              # 零警告零错误
-flutter test                 # 全部通过
-
-# 调试构建
-flutter run                  # 真机测试通话流程
+flutter analyze              # 零警告零错误 ✅
+flutter test                 # 105 tests passed ✅
 
 # 发布构建
 flutter build apk --release --split-per-abi
 flutter build appbundle --release
 ```
 
-- [ ] `flutter analyze` 零错误
-- [ ] `flutter test` 全部通过
+- [x] `flutter analyze` 零错误
+- [x] `flutter test` 105 个测试全部通过
+- [ ] CI 自动化构建通过（含 analyze + test + apk）
 - [ ] 真机测试：注册 → 呼叫 → 通话 → 字幕 → 挂断
 - [ ] 真机测试：悬浮窗最小化 → 权限 → 气泡显示
 - [ ] 真机测试：前台服务通知显示
@@ -80,12 +70,12 @@ flutter build appbundle --release
 - [ ] 内容分级问卷
 - [ ] 定价与分发：免费
 
-## ⬜ 7. Android 兼容性
+## ✅ 7. Android 兼容性
 
 | 检查项 | 要求 | 状态 |
-|--------|------|------|
-| minSdk | 24 (Android 7.0) | ✅ 已配置 |
-| targetSdk | 34 (Android 14) | ✅ |
+|--------|------|:----:|
+| minSdk | 24 (Android 7.0) | ✅ |
+| targetSdk | 36 (Android 15) | ✅ |
 | 32-bit abi | armeabi-v7a | ✅ split-per-abi |
 | 64-bit abi | arm64-v8a | ✅ split-per-abi |
 | x86_64 | 模拟器 | ✅ split-per-abi |
@@ -110,6 +100,5 @@ flutter build appbundle --release
 
 ---
 
-> 版本：v2.0.1-dev
-> 更新日期：2026-06-24
-> 上一版本：v2.0.0 — 代码审查 + 5 个 Bug 修复
+> 版本：v2.0.2
+> 更新日期：2026-06-25
