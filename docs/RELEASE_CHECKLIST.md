@@ -16,9 +16,9 @@ keytool -genkey -v -keystore android/app/upload-keystore.jks \
 # 填写 android/key.properties
 ```
 
-- [ ] 生成 keystore
-- [ ] 填写 `key.properties`（不要提交到 Git）
-- [ ] CI secrets: `KEYSTORE_BASE64`, `KEY_STORE_PASSWORD`, `KEY_PASSWORD`, `KEY_ALIAS`
+- [x] 生成 keystore
+- [x] 填写 `key.properties`（已在 .gitignore 中）
+- [ ] CI secrets: `KEYSTORE_BASE64`, `KEY_STORE_PASSWORD`, `KEY_PASSWORD`, `KEY_ALIAS` （需要手动在 GitHub 网页设置）
 
 ## ⬜ 3. 权限检查
 

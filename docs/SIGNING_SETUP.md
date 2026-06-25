@@ -1,0 +1,55 @@
+# TalkTranslate Android 签名配置指南
+
+## 本地签名（已完成 ✅）
+
+| 文件 | 状态 | 说明 |
+|------|:----:|------|
+| `android/app/upload-keystore.jks` | ✅ 已生成 | 有效期 10000 天，密码：`TalkTranslate2026!` |
+| `android/key.properties` | ✅ 已创建 | 引用 keystore，已在 `.gitignore` 中 |
+| `.gitignore` | ✅ 已配置 | `*.jks`、`android/key.properties` 已忽略 |
+
+## CI 签名配置（需手动操作）
+
+在 GitHub 仓库设置中添加以下 4 个 Secrets:
+
+1. 打开 https://github.com/malaxiya2019/talktranslate/settings/secrets/actions
+2. 点击 **New repository secret**
+3. 依次添加以下 4 个：
+
+### Secret 1: KEYSTORE_BASE64
+
+```
+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
+```
+
+### Secret 2: KEY_STORE_PASSWORD
+
+```
+TalkTranslate2026!
+```
+
+### Secret 3: KEY_PASSWORD
+
+```
+TalkTranslate2026!
+```
+
+### Secret 4: KEY_ALIAS
+
+```
+upload
+```
+
+## 验证签名
+
+配置完成后，推送代码到 GitHub，CI 会自动构建签名 APK：
+
+1. 构建的 APK 会出现在 Actions 的 Artifacts 中
+2. 签名后的 APK 可以直接安装到手机
+3. 如需发布 Google Play，还需 AAB：手动触发 workflow 选择 `aab`
+
+## 安全性说明
+
+- `key.properties` 和 `*.jks` 已在 `.gitignore` 中，**不会提交到 Git**
+- GitHub Secrets 加密存储，只有 CI 运行时可以读取
+- 生产环境发布前，请更换为更强的密码
