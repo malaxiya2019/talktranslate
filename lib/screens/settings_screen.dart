@@ -112,11 +112,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
           setState(() {
             if (isMyLang) {
               _myLang = lang;
-              context.read<AppLanguageProvider>().changeLanguage(lang.code);
+              // 注意：翻译语言与 App 界面语言已分离
+              // App 界面语言通过下方 "App 界面语言" 独立设置
             } else {
               _peerLang = lang;
             }
           });
+        },
+      ),
+    );
+  }
+
+  /// 弹出 App 界面语言选择器（独立于翻译语言）
+  void _showAppLanguagePicker() {
+    final provider = context.read<AppLanguageProvider>();
+    final currentCode = '${provider.currentLocale.languageCode}-${provider.currentLocale.countryCode ?? "US"}';
+    final current = AppLanguage.fromCode(currentCode);
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => _LanguagePickerSheet(
+        isMyLang: true,
+        current: current,
+        onSelect: (lang) {
+          provider.changeLanguage(lang.code);
+          if (mounted) _showSnack('✅ 界面语言已切换为 ${lang.name}');
         },
       ),
     );
@@ -213,6 +236,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ],
               onChanged: (v) => setState(() => _themeMode = v),
             ),
+            const Divider(height: 1),
+            _appLangTile(),
             const Divider(height: 1),
             _switchTile(
               icon: Icons.speaker_notes_outlined,
@@ -488,6 +513,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
       subtitle: Text('${lang.name} (${lang.code})', style: TextStyle(fontSize: 12, color: Colors.grey[500])),
       trailing: const Icon(Icons.chevron_right, size: 18),
       onTap: onTap,
+    );
+  }
+
+  /// App 界面语言卡片（从 AppLanguageProvider 读取当前值）
+  Widget _appLangTile() {
+    final locale = context.read<AppLanguageProvider>().currentLocale;
+    final code = '${locale.languageCode}-${locale.countryCode ?? "US"}';
+    final lang = AppLanguage.fromCode(code);
+    return ListTile(
+      leading: Text(lang.flag, style: const TextStyle(fontSize: 28)),
+      title: const Text('App 界面语言', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+      subtitle: Text('${lang.name} (${lang.code})', style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+      trailing: const Icon(Icons.chevron_right, size: 18),
+      onTap: _showAppLanguagePicker,
     );
   }
 
