@@ -54,6 +54,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       final data = jsonDecode(resp.body) as Map;
       if (data['ok'] == true) {
+        // 保存 JWT Token，后续 WebSocket Auth 使用
+        if (data['token'] != null) {
+          context.read<AppProvider>().setAuthToken(data['token'] as String);
+        }
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('注册成功，请登录')),

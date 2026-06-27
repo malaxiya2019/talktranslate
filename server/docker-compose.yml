@@ -11,7 +11,7 @@ services:
       - NODE_ENV=production
       - PORT=3459
       # JWT — 生产环境务必改掉
-      - JWT_SECRET=talktranslate_dev_secret_2026
+      - JWT_SECRET=Q749NVbigqgQqcLiEIFpMtisnlyR24OeVphnAGfrH6o=
       # PostgreSQL
       - PG_HOST=postgres
       - PG_PORT=5432

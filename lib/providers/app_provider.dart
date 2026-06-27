@@ -29,6 +29,10 @@ class AppProvider extends ChangeNotifier {
   List<String> _onlineUsers = [];
   List<String> get onlineUsers => _onlineUsers;
 
+  // ── JWT 认证 ──
+  String? _authToken;
+  String? get authToken => _authToken;
+
   // ── 服务器 ──
   String _serverUrl = '';
   String get serverUrl => _serverUrl;
@@ -69,6 +73,9 @@ class AppProvider extends ChangeNotifier {
 
     signaling.events.listen((e) {
       switch (e['type']) {
+        case 'auth_ok':
+          // Auth 成功 — 已有 token 无需重复保存
+          break;
         case 'registered':
           _connected = true;
           _phone = e['phone'];
@@ -244,6 +251,11 @@ class AppProvider extends ChangeNotifier {
     await prefs.setString("server_url", url);
   }
 
+  /// 保存 JWT Token（从 REST API 登录/注册获取）
+  void setAuthToken(String token) {
+    _authToken = token;
+  }
+
   Future<void> login(String phone) async {
     _phone = phone;
     if (_serverUrl.isEmpty) {
@@ -253,8 +265,9 @@ class AppProvider extends ChangeNotifier {
     }
     _toast = '正在连接...';
     notifyListeners();
-    await signaling.connect(_serverUrl, phone);
-      await Future.delayed(Duration.zero); // 等待事件传播
+    // 传递 JWT Token 给信令服务，完成 auth → register 完整握手
+    await signaling.connect(_serverUrl, phone, token: _authToken);
+    await Future.delayed(Duration.zero); // 等待事件传播
     if (!_connected) {
       _toast = '网络连接失败，请检查服务器地址和网络';
       notifyListeners();

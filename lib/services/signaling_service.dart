@@ -2,14 +2,37 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
+/// 信令服务 — 管理 WebSocket 连接生命周期
+///
+/// 连接握手顺序（解决重连时 Auth 竞态 Bug）：
+///   1. 建立 WebSocket 连接
+///   2. 发送 auth（携带 JWT Token）
+///   3. 等待 auth_ok 回执
+///   4. 发送 register（注册手机号在线）
+///   5. 等待 registered 回执
+///   6. 释放消息队列 → 业务消息正常流通
+///
+/// 断线重连时：
+///   - 所有业务消息被挂起到 _pendingQueue
+///   - 完整握手完成后才释放队列
+///   - 避免并发业务请求在 Auth 完成前到达网关
 class SignalingService {
   WebSocketChannel? _channel;
   String? _phone;
   String? _serverUrl;
+  String? _authToken;
+  bool _authenticated = false;
+  bool _registered = false;
+
   final _events = StreamController<Map<String, dynamic>>.broadcast();
   Stream<Map<String, dynamic>> get events => _events.stream;
 
-  bool get connected => _channel != null;
+  /// 连接就绪 = 信道存在 + Auth 完成 + 已注册
+  bool get connected => _channel != null && _authenticated && _registered;
+
+  // ── 消息队列（断线重连时挂起业务消息） ──
+  final List<Map<String, dynamic>> _pendingQueue = [];
+  bool _queueEnabled = false;
 
   // ── Ping 检测 ──
   Timer? _pingTimer;
@@ -38,22 +61,64 @@ class SignalingService {
     }
   }
 
-  Future<void> connect(String url, String phone) async {
+  /// 连接信令服务器
+  ///
+  /// 握手流程：
+  ///   [connect] → [auth (JWT)] → [auth_ok] → [register (phone)] → [registered] ✓
+  ///
+  /// [token] 可选：传递 JWT token 进行身份认证。
+  /// 不传 token 时向后兼容（直接 register），但生产环境建议始终携带。
+  Future<void> connect(String url, String phone, {String? token}) async {
     _serverUrl = url;
     _phone = phone;
+    _authToken = token;
+    _authenticated = false;
+    _registered = false;
+
     final connected = Completer<void>();
     try {
       _channel = WebSocketChannel.connect(Uri.parse(url));
       _channel!.stream.listen(
         (data) {
           final msg = jsonDecode(data as String) as Map<String, dynamic>;
-          if (msg['type'] == 'registered' && !connected.isCompleted) {
-            connected.complete();
-          }
-          if (msg['type'] == 'pong') {
-            _handlePong(msg);
-          } else {
-            _events.add(msg);
+          switch (msg['type']) {
+            case 'auth_ok':
+              _authenticated = true;
+              _events.add({'type': 'auth_ok', 'user': msg['user']});
+              // Auth 通过 → 立即发送注册
+              send({'type': 'register', 'phone': phone});
+              break;
+
+            case 'auth_error':
+              _authenticated = false;
+              if (!connected.isCompleted) {
+                connected.completeError(Exception(msg['message'] ?? 'Auth 失败'));
+              }
+              _events.add({'type': 'error', 'message': msg['message']});
+              break;
+
+            case 'registered':
+              _registered = true;
+              _events.add({
+                'type': 'registered',
+                'phone': msg['phone'],
+                'instance': msg['instance'],
+              });
+              // 注册成功 → 释放消息队列
+              _flushPendingQueue();
+              if (!connected.isCompleted) connected.complete();
+              break;
+
+            case 'pong':
+              _handlePong(msg);
+              break;
+
+            default:
+              // 普通业务消息：只在握手完成后才投递
+              if (_authenticated && _registered) {
+                _events.add(msg);
+              }
+              break;
           }
         },
         onError: (e) {
@@ -63,28 +128,65 @@ class SignalingService {
         },
         onDone: () {
           _channel = null;
+          _authenticated = false;
+          _registered = false;
           if (!connected.isCompleted) connected.complete();
           _events.add({'type': 'disconnected'});
         },
         cancelOnError: false,
       );
-      // 等待 WebSocket 连接就绪后再注册
+
+      // 等待 WebSocket 底层就绪
       await _channel!.ready;
-      send({'type': 'register', 'phone': phone});
-      // 等待注册确认（超时 10 秒）
-      await connected.future.timeout(const Duration(seconds: 10));
+
+      // 第一步：发送 Auth（携带 JWT Token）
+      if (_authToken != null && _authToken!.isNotEmpty) {
+        send({'type': 'auth', 'token': _authToken});
+      } else {
+        // 无 Token → 跳过 Auth 步骤，直接 Register（向后兼容）
+        _authenticated = true;
+        send({'type': 'register', 'phone': phone});
+      }
+
+      // 等待握手完成（auth + register），超时 15 秒
+      await connected.future.timeout(const Duration(seconds: 15));
     } catch (e) {
       _channel = null;
+      _authenticated = false;
+      _registered = false;
       _events.add({'type': 'error', 'message': '连接失败: $e'});
+      rethrow;
     }
   }
 
+  /// 发送消息 — 重连队列模式下进入挂起队列
   void send(Map<String, dynamic> msg) {
+    // 握手阶段的消息（auth / register）不受队列限制
+    if (_queueEnabled &&
+        msg['type'] != 'auth' &&
+        msg['type'] != 'register') {
+      _pendingQueue.add(msg);
+      return;
+    }
     if (_channel != null) {
       try {
         _channel!.sink.add(jsonEncode(msg));
       } catch (e) {
         _events.add({'type': 'error', 'message': '发送失败: $e'});
+      }
+    }
+  }
+
+  /// 释放消息队列 — 握手完成后将积压消息依次发出
+  void _flushPendingQueue() {
+    if (_pendingQueue.isEmpty) return;
+    final queue = List<Map<String, dynamic>>.from(_pendingQueue);
+    _pendingQueue.clear();
+    for (final msg in queue) {
+      try {
+        _channel?.sink.add(jsonEncode(msg));
+      } catch (_) {
+        // 忽略队列释放时的发送错误
       }
     }
   }
@@ -111,16 +213,29 @@ class SignalingService {
   void disconnect() {
     _channel?.sink.close();
     _channel = null;
+    _authenticated = false;
+    _registered = false;
+    _pendingQueue.clear();
+    _queueEnabled = false;
   }
 
-  /// 断线重连 — 用上次的地址和手机号重新连接
+  /// 断线重连 — 使用上次的服务器地址、手机号和 JWT Token
+  ///
+  /// 重连时自动启用消息队列，避免业务消息在握手完成前到达网关。
+  /// 完整握手（auth → register）完成后自动释放队列。
   Future<bool> reconnect() async {
     if (_serverUrl == null || _phone == null) return false;
+
+    // 启用消息队列：挂起重连期间的所有业务消息
+    _queueEnabled = true;
     disconnect();
+
     try {
-      await connect(_serverUrl!, _phone!);
-      return _channel != null;
+      await connect(_serverUrl!, _phone!, token: _authToken);
+      return connected;
     } catch (_) {
+      _queueEnabled = false;
+      _pendingQueue.clear();
       return false;
     }
   }
