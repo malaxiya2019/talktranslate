@@ -41,7 +41,7 @@ jobs:
         run: flutter analyze
 
       - name: Test
-        run: flutter test
+        run: xvfb-run flutter test || flutter test --no-pub
 
   # ── APK/AAB 构建 ──
   build:
