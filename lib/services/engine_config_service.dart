@@ -27,33 +27,53 @@ class EngineConfigService {
   // ── Key 管理 ──
 
   Future<void> saveApiKey(TranslationEngine engine, String key) async {
-    await _secureStorage.write(key: 'API_KEY_${engine.name}', value: key);
+    try {
+      await _secureStorage.write(key: 'API_KEY_${engine.name}', value: key);
+    } catch (_) {}
   }
 
   Future<String?> getApiKey(TranslationEngine engine) async {
-    return await _secureStorage.read(key: 'API_KEY_${engine.name}');
+    try {
+      return await _secureStorage.read(key: 'API_KEY_${engine.name}');
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<void> deleteApiKey(TranslationEngine engine) async {
-    await _secureStorage.delete(key: 'API_KEY_${engine.name}');
+    try {
+      await _secureStorage.delete(key: 'API_KEY_${engine.name}');
+    } catch (_) {}
   }
 
   Future<void> saveBaseUrl(TranslationEngine engine, String url) async {
-    await _secureStorage.write(key: 'BASE_URL_${engine.name}', value: url);
+    try {
+      await _secureStorage.write(key: 'BASE_URL_${engine.name}', value: url);
+    } catch (_) {}
   }
 
   Future<String?> getBaseUrl(TranslationEngine engine) async {
-    return await _secureStorage.read(key: 'BASE_URL_${engine.name}');
+    try {
+      return await _secureStorage.read(key: 'BASE_URL_${engine.name}');
+    } catch (_) {
+      return null;
+    }
   }
 
   // ── 模型名管理 ──
 
   Future<void> saveModelName(TranslationEngine engine, String model) async {
-    await _secureStorage.write(key: 'MODEL_${engine.name}', value: model);
+    try {
+      await _secureStorage.write(key: 'MODEL_${engine.name}', value: model);
+    } catch (_) {}
   }
 
   Future<String?> getModelName(TranslationEngine engine) async {
-    return await _secureStorage.read(key: 'MODEL_${engine.name}');
+    try {
+      return await _secureStorage.read(key: 'MODEL_${engine.name}');
+    } catch (_) {
+      return null;
+    }
   }
 
   /// 默认模型名（当用户未自定义时使用）

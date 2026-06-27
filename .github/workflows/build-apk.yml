@@ -40,15 +40,8 @@ jobs:
       - name: Analyze
         run: flutter analyze
 
-      - name: Test (core)
-        run: flutter test test/unit/call_state_machine_test.dart test/unit/call_model_test.dart test/unit/phrase_dictionary_test.dart test/unit/subtitle_buffer_test.dart test/unit/login_provider_test.dart
-
-      - name: Test (services - retry queue)
-        run: flutter test test/unit/translation_service_test.dart test/unit/translation_pipeline_test.dart test/unit/call_service_test.dart
-
-      - name: Test (services - network)
-        run: flutter test test/unit/network_monitor_test.dart
-        continue-on-error: true
+      - name: Test (unit)
+        run: flutter test test/unit/
 
   # ── APK/AAB 构建 ──
   build:
