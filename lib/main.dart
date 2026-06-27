@@ -6,6 +6,7 @@ import 'providers/app_language_provider.dart';
 import 'screens/register_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/app_shell.dart';
+import 'l10n/l10n.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -50,6 +51,7 @@ class TalkTranslateApp extends StatelessWidget {
               GlobalMaterialLocalizations.delegate,
               GlobalWidgetsLocalizations.delegate,
               GlobalCupertinoLocalizations.delegate,
+              L10nDelegate(),
             ],
             initialRoute: '/',
             routes: {

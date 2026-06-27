@@ -10,6 +10,7 @@ import '../widgets/call/call_actions_bar.dart';
 import '../widgets/call/call_timer.dart';
 import '../widgets/chat/message_bubble.dart';
 import '../widgets/chat/translation_card.dart';
+import '../l10n/l10n.dart';
 
 /// 通话页面 — Selector 局部绑定，防 rebuild 风暴
 class CallScreen extends StatefulWidget {
@@ -199,7 +200,7 @@ class _CallScreenState extends State<CallScreen>
               pingMs: st == CallState.inCall ? ping : null,
             ),
           ),
-          const Spacer(),
+          Spacer(),
           if (st == CallState.inCall) CallTimer(elapsed: _elapsed),
         ],
       ),
@@ -255,9 +256,8 @@ class _CallScreenState extends State<CallScreen>
                 valueColor: AlwaysStoppedAnimation<Color>(Colors.orangeAccent),
               ),
             ),
-            const SizedBox(width: 8),
-            Text(
-              '网络不稳定，正在重连...',
+            SizedBox(width: 8),
+            Text(L10n.of(context)!.reconnecting,
               style: TextStyle(fontSize: 13, color: Colors.orangeAccent[200]),
             ),
           ],
@@ -282,7 +282,7 @@ class _CallScreenState extends State<CallScreen>
             online: false,
           ),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: 16),
         Selector<AppProvider, String>(
           selector: (_, p) => p.peerPhone ?? '',
           builder: (_, phone, __) => Text(
@@ -294,9 +294,9 @@ class _CallScreenState extends State<CallScreen>
             ),
           ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         Text(
-          st == CallState.connecting ? '正在呼叫...' : '响铃中...',
+          st == CallState.connecting ? L10n.of(context)!.calling : L10n.of(context)!.ringing,
           style: const TextStyle(fontSize: 15, color: Colors.white38),
         ),
       ],
@@ -309,7 +309,7 @@ class _CallScreenState extends State<CallScreen>
     return Column(
       key: const ValueKey('inCall'),
       children: [
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -327,7 +327,7 @@ class _CallScreenState extends State<CallScreen>
             ),
           ],
         ),
-        const SizedBox(height: 4),
+        SizedBox(height: 4),
         Selector<AppProvider, String>(
           selector: (_, p) => p.peerPhone ?? '',
           builder: (_, phone, __) => Text(
@@ -335,7 +335,7 @@ class _CallScreenState extends State<CallScreen>
             style: const TextStyle(fontSize: 16, color: Colors.white54),
           ),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: 16),
 
         // 对方字幕（subtitle 独立 Selector）
         Expanded(
@@ -354,7 +354,7 @@ class _CallScreenState extends State<CallScreen>
                     fontSize: 20,
                   ),
                 ),
-                const SizedBox(height: 10),
+                SizedBox(height: 10),
                 Selector<AppProvider, String>(
                   selector: (_, p) => p.subtitleTranslated,
                   builder: (_, translated, __) => TranslationCard(
@@ -368,7 +368,7 @@ class _CallScreenState extends State<CallScreen>
           ),
         ),
 
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
 
         // 我的字幕（mySpeech 独立 Selector）
         Expanded(
@@ -388,7 +388,7 @@ class _CallScreenState extends State<CallScreen>
                     fontSize: 18,
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 Selector<AppProvider, String>(
                   selector: (_, p) => p.mySpeechTranslated,
                   builder: (_, translated, __) => TranslationCard(
@@ -402,7 +402,7 @@ class _CallScreenState extends State<CallScreen>
             ),
           ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
       ],
     );
   }

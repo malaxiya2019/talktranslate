@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/engine_config_service.dart';
+import '../l10n/l10n.dart';
 
 /// 翻译引擎与自定义模型配置页
 class EngineConfigScreen extends StatefulWidget {
@@ -93,16 +94,16 @@ class _EngineConfigScreenState extends State<EngineConfigScreen> {
         actions: [
           TextButton.icon(
             onPressed: _saveConfig,
-            icon: const Icon(Icons.save),
-            label: const Text('保存'),
+            icon: Icon(Icons.save),
+            label: Text(L10n.of(context)!.save),
           ),
         ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Text('选择翻译引擎', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 8),
+          Text(L10n.of(context)!.selectEngine, style: Theme.of(context).textTheme.titleMedium),
+          SizedBox(height: 8),
           DropdownButtonFormField<TranslationEngine>(
             initialValue: _selectedEngine,
             decoration: const InputDecoration(
@@ -115,10 +116,10 @@ class _EngineConfigScreenState extends State<EngineConfigScreen> {
             )).toList(),
             onChanged: (v) => _onEngineChanged(v),
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
 
-          Text('API Key', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 8),
+          Text(L10n.of(context)!.apiKey, style: Theme.of(context).textTheme.titleMedium),
+          SizedBox(height: 8),
           TextField(
             controller: _apiKeyCtl,
             obscureText: _obscureKey,
@@ -132,15 +133,15 @@ class _EngineConfigScreenState extends State<EngineConfigScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(
             '使用 Flutter Secure Storage 硬件加密存储',
             style: TextStyle(fontSize: 12, color: Colors.grey[500]),
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
 
           Text('API Endpoint (可选)', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           TextField(
             controller: _baseUrlCtl,
             decoration: InputDecoration(
@@ -149,7 +150,7 @@ class _EngineConfigScreenState extends State<EngineConfigScreen> {
               contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
             ),
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
 
           SizedBox(
             width: double.infinity,
@@ -157,12 +158,12 @@ class _EngineConfigScreenState extends State<EngineConfigScreen> {
             child: ElevatedButton.icon(
               onPressed: _testing ? null : _testConnection,
               icon: _testing
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 18, height: 18,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Icon(Icons.wifi_tethering),
-              label: Text(_testing ? '测试中...' : '测试连接'),
+                  : Icon(Icons.wifi_tethering),
+              label: Text(_testing ? L10n.of(context)!.testing : L10n.of(context)!.testConnection),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blue,
                 foregroundColor: Colors.white,
@@ -170,7 +171,7 @@ class _EngineConfigScreenState extends State<EngineConfigScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
 
           if (_testResult == 'ok')
             Container(
@@ -180,11 +181,11 @@ class _EngineConfigScreenState extends State<EngineConfigScreen> {
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: Colors.green),
               ),
-              child: const Row(
+              child: Row(
                 children: [
                   Icon(Icons.check_circle, color: Colors.green, size: 20),
                   SizedBox(width: 8),
-                  Text('✓ 连接成功', style: TextStyle(color: Colors.green)),
+                  Text(L10n.of(context)!.connectionOk, style: TextStyle(color: Colors.green)),
                 ],
               ),
             ),
@@ -198,8 +199,8 @@ class _EngineConfigScreenState extends State<EngineConfigScreen> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.error, color: Colors.red, size: 20),
-                  const SizedBox(width: 8),
+                  Icon(Icons.error, color: Colors.red, size: 20),
+                  SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       '✗ ${_testResult!.replaceFirst('error:', '')}',

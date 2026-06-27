@@ -9,6 +9,7 @@ import 'call_screen.dart';
 import 'settings_screen.dart';
 import 'history_screen.dart';
 import 'register_screen.dart';
+import '../l10n/l10n.dart';
 
 /// 国家代码
 class CountryCode {
@@ -125,11 +126,11 @@ class _HomeScreenState extends State<HomeScreen> {
     final pages = [
       _wizardPageData(
         '🗣️',
-        '欢迎使用 TalkTranslate',
-        '实时翻译语音通话平台\n跨国通话 · AI 字幕 · 清晰音质',
+        L10n.of(context)!.welcome,
+        L10n.of(context)!.welcomeDesc,
       ),
-      _wizardPageData('🌍', '支持多国语言', '中、英、日、韩、西、法、德…\n自动识别、实时翻译'),
-      _wizardPageData('🔒', '安全可靠', '端到端加密通话\n您的隐私安全无忧'),
+      _wizardPageData('🌍', L10n.of(context)!.multiLang, L10n.of(context)!.multiLangDesc),
+      _wizardPageData('🔒', L10n.of(context)!.secure, L10n.of(context)!.secureDesc),
     ];
 
     return Scaffold(
@@ -137,7 +138,7 @@ class _HomeScreenState extends State<HomeScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            const Spacer(flex: 2),
+            Spacer(flex: 2),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 40),
               child: Column(
@@ -146,7 +147,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     pages[_wizardPage].emoji,
                     style: const TextStyle(fontSize: 64),
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24),
                   Text(
                     pages[_wizardPage].title,
                     style: const TextStyle(
@@ -154,7 +155,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   Text(
                     pages[_wizardPage].desc,
                     textAlign: TextAlign.center,
@@ -167,7 +168,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
             ),
-            const Spacer(),
+            Spacer(),
             // 指示点
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -184,7 +185,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 32),
+            SizedBox(height: 32),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 32),
               child: SizedBox(
@@ -205,7 +206,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   child: Text(
-                    _wizardPage < 2 ? '下一步' : '开始使用',
+                    _wizardPage < 2 ? L10n.of(context)!.next : L10n.of(context)!.start,
                     style: const TextStyle(fontSize: 16),
                   ),
                 ),
@@ -214,9 +215,9 @@ class _HomeScreenState extends State<HomeScreen> {
             if (_wizardPage < 2)
               TextButton(
                 onPressed: () => setState(() => _showWizard = false),
-                child: Text('跳过', style: TextStyle(color: Colors.grey[400])),
+                child: Text(L10n.of(context)!.skip, style: TextStyle(color: Colors.grey[400])),
               ),
-            const SizedBox(height: 32),
+            SizedBox(height: 32),
           ],
         ),
       ),
@@ -243,7 +244,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Spacer(),
+                  Spacer(),
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -255,24 +256,24 @@ class _HomeScreenState extends State<HomeScreen> {
                               ? Colors.orange : Colors.green,
                         ),
                       ),
-                      const SizedBox(width: 6),
+                      SizedBox(width: 6),
                       Text(
                         _serverCtl.text.contains('localhost') ? '未连接' : '就绪',
                         style: TextStyle(fontSize: 12, color: Colors.grey[500]),
                       ),
                     ],
                   ),
-                  const Spacer(),
+                  Spacer(),
                   InkWell(
                     onTap: () => _showLanguagePicker(context),
-                    child: const Padding(
+                    child: Padding(
                       padding: EdgeInsets.all(4),
                       child: Text('🌐', style: TextStyle(fontSize: 20)),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
 
               // Logo (连续点击5次进入开发者模式)
               GestureDetector(
@@ -294,23 +295,21 @@ class _HomeScreenState extends State<HomeScreen> {
                     color: Colors.blue.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(18),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.translate,
                     size: 40,
                     color: Colors.blue,
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
-              const Text(
-                'TalkTranslate',
+              SizedBox(height: 16),
+              Text(L10n.of(context)!.appName,
                 style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
               ),
-              Text(
-                '实时翻译语音通话平台',
+              Text(L10n.of(context)!.appDesc,
                 style: TextStyle(fontSize: 13, color: Colors.grey[500]),
               ),
-              const SizedBox(height: 32),
+              SizedBox(height: 32),
 
               // 服务器 (可折叠) — Release 包隐藏
               if (!kReleaseMode)
@@ -327,19 +326,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     Row(
                       children: [
                         Icon(Icons.dns, size: 16, color: Colors.grey[500]),
-                        const SizedBox(width: 6),
-                        Text(
-                          '服务器配置',
+                        SizedBox(width: 6),
+                        Text(L10n.of(context)!.serverConfig,
                           style: TextStyle(
                             fontSize: 13,
                             color: Colors.grey[500],
                           ),
                         ),
-                        const Spacer(),
+                        Spacer(),
                         TextButton(
                           onPressed: () => _serverCtl.text = _defaultServer,
-                          child: const Text(
-                            '默认',
+                          child: Text(L10n.of(context)!.default_,
                             style: TextStyle(fontSize: 12),
                           ),
                         ),
@@ -348,7 +345,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     TextField(
                       controller: _serverCtl,
                       decoration: InputDecoration(
-                        hintText: 'wss://your-server.com:3459',
+                        hintText: L10n.of(context)!.serverHint,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
                           borderSide: BorderSide.none,
@@ -389,7 +386,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               _country.flag,
                               style: const TextStyle(fontSize: 20),
                             ),
-                            const SizedBox(width: 4),
+                            SizedBox(width: 4),
                             Text(
                               _country.dial,
                               style: const TextStyle(
@@ -397,7 +394,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
-                            const Icon(
+                            Icon(
                               Icons.arrow_drop_down,
                               size: 20,
                               color: Colors.grey,
@@ -410,8 +407,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     Expanded(
                       child: TextField(
                         controller: _phoneCtl,
-                        decoration: const InputDecoration(
-                          hintText: '请输入手机号',
+                        decoration: InputDecoration(
+                          hintText: L10n.of(context)!.enterPhone,
                           border: InputBorder.none,
                           contentPadding: EdgeInsets.fromLTRB(12, 14, 12, 14),
                         ),
@@ -425,7 +422,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
               // 获取验证码
               if (!_sentCode) ...[
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,
                   height: 44,
@@ -448,8 +445,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
-                    child: Text(
-                      '获取验证码',
+                    child: Text(L10n.of(context)!.getCode,
                       style: TextStyle(fontSize: 15, color: Colors.blue[600]),
                     ),
                   ),
@@ -458,7 +454,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
               // 验证码输入
               if (_sentCode) ...[
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 Container(
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.grey[300]!),
@@ -473,9 +469,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(Icons.sms, size: 18, color: Colors.grey[500]),
-                            const SizedBox(width: 6),
-                            Text(
-                              '验证码',
+                            SizedBox(width: 6),
+                            Text(L10n.of(context)!.verificationCode,
                               style: TextStyle(
                                 fontSize: 13,
                                 color: Colors.grey[500],
@@ -489,7 +484,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: TextField(
                           controller: _codeCtl,
                           decoration: InputDecoration(
-                            hintText: '输入验证码',
+                            hintText: L10n.of(context)!.codeHint,
                             border: InputBorder.none,
                             contentPadding: const EdgeInsets.fromLTRB(
                               12,
@@ -497,7 +492,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               12,
                               14,
                             ),
-                            suffixText: _codeCountdown > 0 ? '重新获取 (${_codeCountdown}s)' : '重新获取',
+                            suffixText: _codeCountdown > 0 ? '重新获取 (${_codeCountdown}s)' : L10n.of(context)!.resend,
                             suffixStyle: TextStyle(
                               fontSize: 12,
                               color: Colors.grey[400],
@@ -515,7 +510,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ],
 
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
 
               // 登录按钮
               SizedBox(
@@ -544,14 +539,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     disabledBackgroundColor: Colors.grey[200],
                     disabledForegroundColor: Colors.grey[600],
                   ),
-                  child: const Text(
-                    '登录',
+                  child: Text(L10n.of(context)!.login,
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),
 
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
 
               // 协议
               Row(
@@ -568,15 +562,15 @@ class _HomeScreenState extends State<HomeScreen> {
                       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   Expanded(
                     child: Text.rich(
                       TextSpan(
-                        text: '我已阅读并同意 ',
+                        text: L10n.of(context)!.agreePrefix,
                         style: TextStyle(fontSize: 12, color: Colors.grey[500]),
                         children: [
                           TextSpan(
-                            text: '《用户协议》',
+                            text: L10n.of(context)!.userAgreement,
                             style: TextStyle(color: Colors.blue[600]),
                           ),
                           TextSpan(
@@ -584,7 +578,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             style: TextStyle(color: Colors.grey[500]),
                           ),
                           TextSpan(
-                            text: '《隐私政策》',
+                            text: L10n.of(context)!.privacyPolicy,
                             style: TextStyle(color: Colors.blue[600]),
                           ),
                         ],
@@ -593,7 +587,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -604,8 +598,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         MaterialPageRoute(builder: (_) => const RegisterScreen()),
                       );
                     },
-                    child: Text(
-                      '新用户注册',
+                    child: Text(L10n.of(context)!.newUser,
                       style: TextStyle(fontSize: 13, color: Color(0xFF1E88E5)),
                     ),
                   ),
@@ -613,7 +606,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   TextButton(
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('密码重置功能开发中')),
+                        SnackBar(content: Text(L10n.of(context)!.forgotPwdWip)),
                       );
                     },
                     child: Text(
@@ -623,9 +616,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
-              Text(
-                'Version 2.0.0',
+              SizedBox(height: 8),
+              Text(L10n.of(context)!.version,
                 style: TextStyle(fontSize: 11, color: Colors.grey[400]),
               ),
             ],
@@ -653,11 +645,11 @@ class _HomeScreenState extends State<HomeScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text('请输入 WebSocket 服务器地址', style: TextStyle(fontSize: 14)),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             TextField(
               controller: ctl,
-              decoration: const InputDecoration(
-                hintText: 'wss://your-server.com',
+              decoration: InputDecoration(
+                hintText: L10n.of(context)!.serverHint,
                 border: OutlineInputBorder(),
                 isDense: true,
               ),
@@ -668,7 +660,7 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, null),
-            child: const Text('取消'),
+            child: Text(L10n.of(context)!.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, ctl.text.trim()),
@@ -698,10 +690,9 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
-          const Padding(
+          Padding(
             padding: EdgeInsets.only(bottom: 8),
-            child: Text(
-              '选择国家/地区',
+            child: Text(L10n.of(context)!.selectCountry,
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
           ),
@@ -767,7 +758,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     style: TextStyle(fontSize: 10, color: Colors.green[700]),
                   ),
                 ),
-                const SizedBox(width: 10),
+                SizedBox(width: 10),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -788,9 +779,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             color: Colors.green,
                           ),
                         ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '在线',
+                        SizedBox(width: 4),
+                        Text(L10n.of(context)!.online,
                           style: TextStyle(
                             fontSize: 11,
                             color: Colors.green[600],
@@ -800,7 +790,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ],
                 ),
-                const Spacer(),
+                Spacer(),
                 GestureDetector(
                   onTap: () => Navigator.push(
                     context,
@@ -808,7 +798,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   child: Icon(Icons.history, size: 20, color: Colors.grey[500]),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 GestureDetector(
                   onTap: () => Navigator.push(
                     context,
@@ -820,7 +810,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     color: Colors.grey[500],
                   ),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 GestureDetector(
                   onTap: () => SystemNavigator.pop(),
                   child: Icon(
@@ -845,14 +835,12 @@ class _HomeScreenState extends State<HomeScreen> {
                         size: 64,
                         color: Colors.grey[200],
                       ),
-                      const SizedBox(height: 12),
-                      Text(
-                        '暂无联系人',
+                      SizedBox(height: 12),
+                      Text(L10n.of(context)!.noContacts,
                         style: TextStyle(fontSize: 16, color: Colors.grey[400]),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '邀请好友或等待对方上线',
+                      SizedBox(height: 4),
+                      Text(L10n.of(context)!.noContactsDesc,
                         style: TextStyle(fontSize: 13, color: Colors.grey[300]),
                       ),
                     ],
@@ -869,14 +857,13 @@ class _HomeScreenState extends State<HomeScreen> {
                             backgroundColor: Colors.green.withValues(
                               alpha: 0.1,
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.person_add_alt,
                               size: 20,
                               color: Colors.green,
                             ),
                           ),
-                          title: const Text(
-                            '新建通话',
+                          title: Text(L10n.of(context)!.newCall,
                             style: TextStyle(fontSize: 15, color: Colors.green),
                           ),
                           onTap: () => _showDialDialog(context),
@@ -911,8 +898,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                 color: Colors.green,
                               ),
                             ),
-                            const SizedBox(width: 4),
-                            const Text('在线', style: TextStyle(fontSize: 12)),
+                            SizedBox(width: 4),
+                            Text(L10n.of(context)!.online, style: TextStyle(fontSize: 12)),
                           ],
                         ),
                         trailing: IconButton(
@@ -941,7 +928,7 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (ctx) {
         final phoneCtl = TextEditingController();
         return AlertDialog(
-          title: const Text('输入对方手机号'),
+          title: Text(L10n.of(context)!.enterPeerPhone),
           content: TextField(
             controller: phoneCtl,
             autofocus: true,
@@ -955,7 +942,7 @@ class _HomeScreenState extends State<HomeScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('取消'),
+              child: Text(L10n.of(context)!.cancel),
             ),
             FilledButton.icon(
               onPressed: () {
@@ -966,8 +953,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   _pushCallScreen();
                 }
               },
-              icon: const Icon(Icons.call, size: 16),
-              label: const Text('呼叫'),
+              icon: Icon(Icons.call, size: 16),
+              label: Text(L10n.of(context)!.call),
             ),
           ],
         );

@@ -4,6 +4,7 @@ import '../providers/app_provider.dart';
 import '../providers/app_language_provider.dart';
 import 'engine_config_screen.dart';
 import '../services/keep_alive_helper.dart';
+import '../l10n/l10n.dart';
 
 /// 支持的语言
 class AppLanguage {
@@ -85,7 +86,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
     if (mounted) {
       setState(() => _saving = false);
-      _showSnack('✅ 设置已保存');
+      _showSnack(L10n.of(context)!.saved);
     }
   }
 
@@ -155,7 +156,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('取消')),
               TextButton(
                 onPressed: () => Navigator.pop(ctx, true),
-                child: Text('确定', style: TextStyle(color: Colors.red[600])),
+                child: Text(L10n.of(context)!.confirm, style: TextStyle(color: Colors.red[600])),
               ),
             ],
           ),
@@ -176,15 +177,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('设置'),
+        title: Text(L10n.of(context)!.settings),
         centerTitle: true,
         actions: [
           TextButton.icon(
             onPressed: _saving ? null : _save,
             icon: _saving
-                ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                : const Icon(Icons.check),
-            label: const Text('保存'),
+                ? SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                : Icon(Icons.check),
+            label: Text(L10n.of(context)!.save),
           ),
         ],
       ),
@@ -194,7 +195,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           // ═══════════════════
           // 🤖 翻译引擎
           // ═══════════════════
-          _sectionHeader('🤖 翻译引擎', 'AI 语音翻译配置'),
+          _sectionHeader(L10n.of(context)!.translationEngine, 'AI 语音翻译配置'),
           _card([
             _textField(
               controller: _apiKeyCtl,
@@ -205,12 +206,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
               helper: '从 platform.deepseek.com 获取',
               monospace: true,
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             _dropdownTile(
               icon: Icons.model_training,
               label: '翻译模型',
               value: _translationProvider,
-              options: const [
+              options: [
                 ('deepseek', 'DeepSeek Chat'),
                 ('openai', 'OpenAI GPT'),
               ],
@@ -218,21 +219,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ]),
 
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
 
           // ═══════════════════
           // 🎨 外观主题
           // ═══════════════════
-          _sectionHeader('🎨 外观', '主题与显示'),
+          _sectionHeader(L10n.of(context)!.appearance, '主题与显示'),
           _card([
             _dropdownTile(
               icon: Icons.dark_mode,
-              label: '主题模式',
+              label: L10n.of(context)!.themeMode,
               value: _themeMode,
-              options: const [
-                ('system', '跟随系统'),
-                ('light', '浅色'),
-                ('dark', '深色'),
+              options: [
+                ('system', L10n.of(context)!.system),
+                ('light', L10n.of(context)!.light),
+                ('dark', L10n.of(context)!.dark),
               ],
               onChanged: (v) => setState(() => _themeMode = v),
             ),
@@ -248,24 +249,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ]),
 
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
 
           // ═══════════════════
           // 🌐 翻译语言
           // ═══════════════════
-          _sectionHeader('🌐 翻译语言', '选择翻译的双向语言'),
+          _sectionHeader(L10n.of(context)!.language, '选择翻译的双向语言'),
           _card([
-            _langTile('我的语言', _myLang, () => _showLanguagePicker(true)),
+            _langTile(L10n.of(context)!.myLang, _myLang, () => _showLanguagePicker(true)),
             const Divider(height: 1),
-            _langTile('对方语言', _peerLang, () => _showLanguagePicker(false)),
+            _langTile(L10n.of(context)!.peerLang, _peerLang, () => _showLanguagePicker(false)),
           ]),
 
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
 
           // ═══════════════════
           // 📞 通话偏好
           // ═══════════════════
-          _sectionHeader('📞 通话', '通话行为设置'),
+          _sectionHeader(L10n.of(context)!.callBehavior, '通话行为设置'),
           _card([
             _switchTile(
               icon: Icons.call_end_outlined,
@@ -292,12 +293,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ]),
 
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
 
           // ═══════════════════
           // 🔊 音频
           // ═══════════════════
-          _sectionHeader('🔊 音频', '音频输入输出设置'),
+          _sectionHeader(L10n.of(context)!.noiseSuppression, '音频输入输出设置'),
           _card([
             _switchTile(
               icon: Icons.hearing,
@@ -308,12 +309,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ]),
 
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
 
           // ═══════════════════
           // 🔧 高级
           // ═══════════════════
-          _sectionHeader('🔧 高级', '服务器与开发者选项'),
+          _sectionHeader(L10n.of(context)!.engineConfig, L10n.of(context)!.serverDevOptions),
           _card([
             _textField(
               controller: _serverCtl,
@@ -321,33 +322,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
               hint: 'ws://192.168.1.100:8788',
               helper: 'WebSocket 信令服务器地址',
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
                 onPressed: () => Navigator.push(context, MaterialPageRoute(
                   builder: (_) => const EngineConfigScreen(),
                 )),
-                icon: const Icon(Icons.tune, size: 18),
+                icon: Icon(Icons.tune, size: 18),
                 label: const Text('详细引擎配置'),
               ),
             ),
           ]),
 
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
 
           // ═══════════════════
           // 📊 数据管理
           // ═══════════════════
-          _sectionHeader('📊 数据管理', '管理本地数据与缓存'),
+          _sectionHeader(L10n.of(context)!.dataManagement, '管理本地数据与缓存'),
           _card([
             _actionTile(
               icon: Icons.history,
-              label: '清除通话记录',
+              label: L10n.of(context)!.clearCallHistory,
               subtitle: '删除所有历史通话记录',
               iconColor: Colors.orange,
               onTap: () async {
-                if (await _confirmClear('清除通话记录', '确定删除所有通话记录吗？此操作不可撤销。')) {
+                if (await _confirmClear(L10n.of(context)!.clearCallHistory, '确定删除所有通话记录吗？此操作不可撤销。')) {
                   _showSnack('✅ 通话记录已清除');
                 }
               },
@@ -367,22 +368,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const Divider(height: 1),
             _actionTile(
               icon: Icons.download_outlined,
-              label: '导出数据',
+              label: L10n.of(context)!.exportData,
               subtitle: '导出设置和通话记录',
               iconColor: Colors.blue,
               onTap: () => _showSnack('📦 数据导出功能 (开发中)'),
             ),
           ]),
 
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
 
           // ═══════════════════
           // 🛡️ 保活
           // ═══════════════════
-          _sectionHeader('🛡️ 保活', '防止后台被系统杀死'),
+          _sectionHeader(L10n.of(context)!.appKeeper, '防止后台被系统杀死'),
           _KeepAliveCard(),
 
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
 
           // ═══════════════════
           // ℹ️ 关于
@@ -391,14 +392,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _card([
             _infoTile('应用名称', 'TalkTranslate'),
             const Divider(height: 1),
-            _infoTile('版本', '1.0.0'),
+            _infoTile(L10n.of(context)!.appVersion, '1.0.0'),
             const Divider(height: 1),
             _infoTile('引擎', 'DeepSeek + WebRTC'),
             const Divider(height: 1),
             _infoTile('数据存储', 'SharedPreferences + SecureStorage'),
           ]),
 
-          const SizedBox(height: 40),
+          SizedBox(height: 40),
         ],
       ),
     );
@@ -445,7 +446,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.grey[700])),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           TextField(
             controller: controller,
             obscureText: obscure,
@@ -463,7 +464,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
           if (helper.isNotEmpty) ...[
-            const SizedBox(height: 6),
+            SizedBox(height: 6),
             Text(helper, style: TextStyle(fontSize: 11, color: Colors.grey[400])),
           ],
         ],
@@ -499,7 +500,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       title: Text(label, style: const TextStyle(fontSize: 14)),
       trailing: DropdownButton<String>(
         value: value,
-        underline: const SizedBox(),
+        underline: SizedBox(),
         items: options.map((o) => DropdownMenuItem(value: o.$1, child: Text(o.$2))).toList(),
         onChanged: (v) { if (v != null) onChanged(v); },
       ),
@@ -511,7 +512,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       leading: Text(lang.flag, style: const TextStyle(fontSize: 28)),
       title: Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
       subtitle: Text('${lang.name} (${lang.code})', style: TextStyle(fontSize: 12, color: Colors.grey[500])),
-      trailing: const Icon(Icons.chevron_right, size: 18),
+      trailing: Icon(Icons.chevron_right, size: 18),
       onTap: onTap,
     );
   }
@@ -525,7 +526,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       leading: Text(lang.flag, style: const TextStyle(fontSize: 28)),
       title: const Text('App 界面语言', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
       subtitle: Text('${lang.name} (${lang.code})', style: TextStyle(fontSize: 12, color: Colors.grey[500])),
-      trailing: const Icon(Icons.chevron_right, size: 18),
+      trailing: Icon(Icons.chevron_right, size: 18),
       onTap: _showAppLanguagePicker,
     );
   }
@@ -541,7 +542,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       leading: Icon(icon, size: 20, color: iconColor),
       title: Text(label, style: const TextStyle(fontSize: 14)),
       subtitle: Text(subtitle, style: TextStyle(fontSize: 12, color: Colors.grey[500])),
-      trailing: const Icon(Icons.chevron_right, size: 18),
+      trailing: Icon(Icons.chevron_right, size: 18),
       onTap: onTap,
     );
   }
@@ -608,7 +609,7 @@ class _LanguagePickerSheetState extends State<_LanguagePickerSheet> {
               children: [
                 Text('选择${widget.isMyLang ? '我的' : '对方'}语言',
                   style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
-                const Spacer(),
+                Spacer(),
                 Text('${filtered.length} 种',
                   style: TextStyle(fontSize: 12, color: Colors.grey[400])),
               ],
@@ -619,8 +620,8 @@ class _LanguagePickerSheetState extends State<_LanguagePickerSheet> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: TextField(
               decoration: InputDecoration(
-                hintText: '搜索语言...',
-                prefixIcon: const Icon(Icons.search, size: 20),
+                hintText: L10n.of(context)!.searchLang,
+                prefixIcon: Icon(Icons.search, size: 20),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 isDense: true,
@@ -628,7 +629,7 @@ class _LanguagePickerSheetState extends State<_LanguagePickerSheet> {
               onChanged: (v) => setState(() => _search = v),
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           const Divider(height: 1),
           // 语言列表
           Flexible(
@@ -642,7 +643,7 @@ class _LanguagePickerSheetState extends State<_LanguagePickerSheet> {
                   title: Text(lang.name),
                   subtitle: Text(lang.code, style: TextStyle(fontSize: 12, color: Colors.grey[400])),
                   trailing: selected
-                      ? const Icon(Icons.check_circle, color: Colors.blue)
+                      ? Icon(Icons.check_circle, color: Colors.blue)
                       : null,
                   selected: selected,
                   onTap: () {
@@ -692,7 +693,7 @@ class _KeepAliveCardState extends State<_KeepAliveCard> {
       ),
       padding: const EdgeInsets.all(16),
       child: _loading
-          ? const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)))
+          ? Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)))
           : Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -717,13 +718,13 @@ class _KeepAliveCardState extends State<_KeepAliveCard> {
                   },
                 ),
                 if (_status!.missingCount > 0) ...[
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   Text('⚠️ 有 ${_status!.missingCount} 项未配置，后台通话可能被系统杀死',
                     style: TextStyle(fontSize: 12, color: Colors.orange[700]),
                   ),
                 ],
                 if (_status!.notificationOk && _status!.batteryOk) ...[
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   Text('✅ 保活配置完成',
                     style: TextStyle(fontSize: 12, color: Colors.green[600]),
                   ),
@@ -743,7 +744,7 @@ class _KeepAliveCardState extends State<_KeepAliveCard> {
       child: Row(
         children: [
           Icon(icon, size: 20, color: ok ? Colors.green : Colors.orange),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -755,7 +756,7 @@ class _KeepAliveCardState extends State<_KeepAliveCard> {
             ),
           ),
           if (ok)
-            const Icon(Icons.check_circle, size: 18, color: Colors.green)
+            Icon(Icons.check_circle, size: 18, color: Colors.green)
           else if (onTap != null)
             TextButton(
               onPressed: onTap,

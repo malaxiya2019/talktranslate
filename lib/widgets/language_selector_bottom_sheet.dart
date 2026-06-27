@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/app_language_provider.dart';
 import '../services/engine_config_service.dart';
 import '../screens/settings_screen.dart';
+import '../l10n/l10n.dart';
 
 /// 语言选择底部弹窗 — 同时更新 UI Locale 和翻译引擎目标语言
 ///
@@ -26,7 +27,7 @@ class LanguageSelectorBottomSheet extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         Container(
           width: 40,
           height: 4,
@@ -35,12 +36,11 @@ class LanguageSelectorBottomSheet extends StatelessWidget {
             borderRadius: BorderRadius.circular(2),
           ),
         ),
-        const SizedBox(height: 16),
-        const Text(
-          '选择语言 / Select Language',
+        SizedBox(height: 16),
+        Text(L10n.of(context)!.selectLangTitle,
           style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         const Divider(height: 1),
         SizedBox(
           height: 400,

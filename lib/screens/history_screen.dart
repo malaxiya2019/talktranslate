@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/call.dart';
 import '../providers/app_provider.dart';
+import '../l10n/l10n.dart';
 
 /// 通话记录页面
 class HistoryScreen extends StatelessWidget {
@@ -10,7 +11,7 @@ class HistoryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('通话记录'), centerTitle: true),
+      appBar: AppBar(title: Text(L10n.of(context)!.history), centerTitle: true),
       body: Consumer<AppProvider>(
         builder: (context, p, _) {
           final records = p.callHistory;
@@ -20,14 +21,12 @@ class HistoryScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(Icons.history, size: 64, color: Colors.grey[200]),
-                  const SizedBox(height: 12),
-                  Text(
-                    '暂无通话记录',
+                  SizedBox(height: 12),
+                  Text(L10n.of(context)!.noHistory,
                     style: TextStyle(fontSize: 16, color: Colors.grey[400]),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '完成一次通话后记录会自动保存',
+                  SizedBox(height: 4),
+                  Text(L10n.of(context)!.historyHint,
                     style: TextStyle(fontSize: 13, color: Colors.grey[300]),
                   ),
                 ],
@@ -70,14 +69,14 @@ class _CallRecordTile extends StatelessWidget {
       subtitle: Row(
         children: [
           Icon(Icons.access_time, size: 12, color: Colors.grey[400]),
-          const SizedBox(width: 4),
+          SizedBox(width: 4),
           Text(
             _formatDate(record.startTime),
             style: TextStyle(fontSize: 12, color: Colors.grey[500]),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Icon(Icons.timer_outlined, size: 12, color: Colors.grey[400]),
-          const SizedBox(width: 4),
+          SizedBox(width: 4),
           Text(
             _formatDuration(record.durationSeconds),
             style: TextStyle(fontSize: 12, color: Colors.grey[500]),
@@ -114,38 +113,37 @@ class _CallRecordTile extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             Text(
               record.peerName,
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             _infoRow(Icons.access_time, _formatDate(record.startTime)),
-            const SizedBox(height: 4),
+            SizedBox(height: 4),
             _infoRow(
               Icons.timer_outlined,
               '时长 ${_formatDuration(record.durationSeconds)}',
             ),
             if (record.lastTranscript != null &&
                 record.lastTranscript!.isNotEmpty) ...[
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               const Divider(),
-              const SizedBox(height: 8),
-              Text(
-                '最后翻译',
+              SizedBox(height: 8),
+              Text(L10n.of(context)!.lastTranslation,
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                   color: Colors.grey[500],
                 ),
               ),
-              const SizedBox(height: 4),
+              SizedBox(height: 4),
               Text(
                 record.lastTranscript!,
                 style: const TextStyle(fontSize: 14, height: 1.4),
               ),
             ],
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
           ],
         ),
       ),
@@ -156,7 +154,7 @@ class _CallRecordTile extends StatelessWidget {
     return Row(
       children: [
         Icon(icon, size: 14, color: Colors.grey[400]),
-        const SizedBox(width: 6),
+        SizedBox(width: 6),
         Text(text, style: TextStyle(fontSize: 13, color: Colors.grey[600])),
       ],
     );

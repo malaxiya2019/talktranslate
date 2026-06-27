@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../providers/app_provider.dart';
+import '../l10n/l10n.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -34,10 +35,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final password = _passwordCtl.text;
     final confirm = _confirmCtl.text;
 
-    if (username.isEmpty) return _error('请输入用户名');
-    if (phone.length < 9) return _error('手机号至少9位');
-    if (password.length < 6) return _error('密码至少6位');
-    if (password != confirm) return _error('两次密码不一致');
+    if (username.isEmpty) return _error(L10n.of(context)!.usernameHint);
+    if (phone.length < 9) return _error(L10n.of(context)!.phoneHint);
+    if (password.length < 6) return _error(L10n.of(context)!.pwdMinLength);
+    if (password != confirm) return _error(L10n.of(context)!.pwdNotMatch);
 
     setState(() => _loading = true);
 
@@ -60,12 +61,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
         }
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('注册成功，请登录')),
+            SnackBar(content: Text(L10n.of(context)!.registerSuccess)),
           );
           Navigator.pop(context, phone);
         }
       } else {
-        _error(data['message'] as String? ?? '注册失败');
+        _error(data['message'] as String? ?? L10n.of(context)!.registerFail);
       }
     } catch (e) {
       _error('连接失败: $e');
@@ -83,38 +84,38 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('新用户注册')),
+      appBar: AppBar(title: Text(L10n.of(context)!.register)),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             TextField(
               controller: _usernameCtl,
-              decoration: const InputDecoration(
-                labelText: '用户名',
+              decoration: InputDecoration(
+                labelText: L10n.of(context)!.username,
                 prefixIcon: Icon(Icons.person),
                 border: OutlineInputBorder(),
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             TextField(
               controller: _phoneCtl,
-              decoration: const InputDecoration(
-                labelText: '手机号',
+              decoration: InputDecoration(
+                labelText: L10n.of(context)!.phone,
                 prefixIcon: Icon(Icons.phone),
                 border: OutlineInputBorder(),
               ),
               keyboardType: TextInputType.phone,
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             TextField(
               controller: _passwordCtl,
               obscureText: _obscurePwd,
               decoration: InputDecoration(
-                labelText: '密码',
-                prefixIcon: const Icon(Icons.lock),
+                labelText: L10n.of(context)!.password,
+                prefixIcon: Icon(Icons.lock),
                 border: const OutlineInputBorder(),
                 suffixIcon: IconButton(
                   icon: Icon(_obscurePwd ? Icons.visibility_off : Icons.visibility),
@@ -122,13 +123,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             TextField(
               controller: _confirmCtl,
               obscureText: _obscureConfirm,
               decoration: InputDecoration(
-                labelText: '确认密码',
-                prefixIcon: const Icon(Icons.lock_outline),
+                labelText: L10n.of(context)!.confirmPassword,
+                prefixIcon: Icon(Icons.lock_outline),
                 border: const OutlineInputBorder(),
                 suffixIcon: IconButton(
                   icon: Icon(_obscureConfirm ? Icons.visibility_off : Icons.visibility),
@@ -136,7 +137,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             SizedBox(
               height: 50,
               child: ElevatedButton(
@@ -147,11 +148,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 child: _loading
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 20, height: 20,
                         child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                       )
-                    : const Text('注册', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                    : Text(L10n.of(context)!.register, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
               ),
             ),
           ],
