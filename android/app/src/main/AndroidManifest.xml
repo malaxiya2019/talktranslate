@@ -6,7 +6,7 @@
     <!-- 前台服务 (保活) -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE"/>
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_COMMUNICATION"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_PHONE_CALL"/>
     <!-- 通知 (Android 13+ 前台服务必需) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <!-- 电池优化白名单 (可选) -->
@@ -49,7 +49,7 @@
         <service
             android:name=".CallForegroundService"
             android:exported="false"
-            android:foregroundServiceType="microphone|communication"/>
+            android:foregroundServiceType="microphone|phoneCall"/>
 
         <!-- 悬浮窗前台服务 -->
         <service
