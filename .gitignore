@@ -59,3 +59,4 @@ server/nginx.conf
 android/app/upload-keystore.jks
 android/key.properties
 *.dill
+.arbor/
