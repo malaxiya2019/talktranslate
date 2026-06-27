@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'dart:ui' show Locale;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
 import '../services/signaling_service.dart';
 import '../services/call_service.dart';
 import '../services/session_restore_service.dart';
@@ -263,6 +264,48 @@ class AppProvider extends ChangeNotifier {
       notifyListeners();
       return;
     }
+
+    // 没有 token 时，先通过 REST API 登录获取 JWT Token
+    if (_authToken == null || _authToken!.isEmpty) {
+      _toast = '正在获取认证...';
+      notifyListeners();
+      try {
+        final baseUrl = _serverUrl
+            .replaceAll('wss://', 'https://')
+            .replaceAll('ws://', 'http://');
+        final resp = await http
+            .post(
+              Uri.parse('$baseUrl/api/login'),
+              headers: {'Content-Type': 'application/json'},
+              body: jsonEncode({'phone': phone, 'password': phone}),
+            )
+            .timeout(const Duration(seconds: 10));
+        final data = jsonDecode(resp.body) as Map;
+        if (data['ok'] == true && data['token'] != null) {
+          _authToken = data['token'] as String;
+        } else {
+          // 登录失败，尝试注册
+          final regResp = await http
+              .post(
+                Uri.parse('$baseUrl/api/register'),
+                headers: {'Content-Type': 'application/json'},
+                body: jsonEncode({
+                  'username': phone,
+                  'phone': phone,
+                  'password': phone,
+                }),
+              )
+              .timeout(const Duration(seconds: 10));
+          final regData = jsonDecode(regResp.body) as Map;
+          if (regData['ok'] == true && regData['token'] != null) {
+            _authToken = regData['token'] as String;
+          }
+        }
+      } catch (e) {
+        // REST API 不可用时，继续无 token 连接（向后兼容）
+      }
+    }
+
     _toast = '正在连接...';
     notifyListeners();
     // 传递 JWT Token 给信令服务，完成 auth → register 完整握手
