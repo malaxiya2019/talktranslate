@@ -12,6 +12,7 @@ import 'settings_screen.dart';
 import 'history_screen.dart';
 import 'register_screen.dart';
 import '../l10n/l10n.dart';
+import 'forgot_password_screen.dart';
 
 /// 国家代码
 class CountryCode {
@@ -547,7 +548,24 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
 
-              SizedBox(height: 16),
+              // 忘记密码
+              TextButton(
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const ForgotPasswordScreen(),
+                  ),
+                ),
+                child: Text(
+                  '忘记密码？',
+                  style: TextStyle(
+                    color: Colors.grey[500],
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+
+              SizedBox(height: 8),
 
               // 协议
               Row(
