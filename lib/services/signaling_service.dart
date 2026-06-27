@@ -53,10 +53,15 @@ class SignalingService {
     _pingTimer = null;
   }
 
+  /// 安全发送事件（防止 dispose 后 add 抛异常）
+  void _emitEvent(Map<String, dynamic> event) {
+    if (!_events.isClosed) _events.add(event);
+  }
+
   void _handlePong(Map<String, dynamic> msg) {
     if (_pingSentAt != null) {
       _lastPingMs = DateTime.now().difference(_pingSentAt!).inMilliseconds;
-      _events.add({'type': 'pong', 'pingMs': _lastPingMs});
+      _emitEvent({'type': 'pong', 'pingMs': _lastPingMs});
       _pingSentAt = null;
     }
   }
@@ -84,7 +89,7 @@ class SignalingService {
           switch (msg['type']) {
             case 'auth_ok':
               _authenticated = true;
-              _events.add({'type': 'auth_ok', 'user': msg['user']});
+              _emitEvent({'type': 'auth_ok', 'user': msg['user']});
               // Auth 通过 → 立即发送注册
               send({'type': 'register', 'phone': phone});
               break;
@@ -94,12 +99,12 @@ class SignalingService {
               if (!connected.isCompleted) {
                 connected.completeError(Exception(msg['message'] ?? 'Auth 失败'));
               }
-              _events.add({'type': 'error', 'message': msg['message']});
+              _emitEvent({'type': 'error', 'message': msg['message']});
               break;
 
             case 'registered':
               _registered = true;
-              _events.add({
+              _emitEvent({
                 'type': 'registered',
                 'phone': msg['phone'],
                 'instance': msg['instance'],
@@ -116,7 +121,7 @@ class SignalingService {
             default:
               // 普通业务消息：只在握手完成后才投递
               if (_authenticated && _registered) {
-                _events.add(msg);
+                _emitEvent(msg);
               }
               break;
           }
@@ -124,14 +129,14 @@ class SignalingService {
         onError: (e) {
           _channel = null;
           if (!connected.isCompleted) connected.completeError(e);
-          _events.add({'type': 'error', 'message': '信令连接异常: $e'});
+          _emitEvent({'type': 'error', 'message': '信令连接异常: $e'});
         },
         onDone: () {
           _channel = null;
           _authenticated = false;
           _registered = false;
           if (!connected.isCompleted) connected.complete();
-          _events.add({'type': 'disconnected'});
+          _emitEvent({'type': 'disconnected'});
         },
         cancelOnError: false,
       );
@@ -154,7 +159,7 @@ class SignalingService {
       _channel = null;
       _authenticated = false;
       _registered = false;
-      _events.add({'type': 'error', 'message': '连接失败: $e'});
+      _emitEvent({'type': 'error', 'message': '连接失败: $e'});
       rethrow;
     }
   }
@@ -172,7 +177,7 @@ class SignalingService {
       try {
         _channel!.sink.add(jsonEncode(msg));
       } catch (e) {
-        _events.add({'type': 'error', 'message': '发送失败: $e'});
+        _emitEvent({'type': 'error', 'message': '发送失败: $e'});
       }
     }
   }

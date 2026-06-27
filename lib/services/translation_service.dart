@@ -20,7 +20,22 @@ class _EngineResult {
   });
 }
 
-/// 翻译服务 — 多引擎自动回退 + 重试
+/// 待重试的翻译条目
+class RetryEntry {
+  final String text;
+  final String from;
+  final String to;
+  final DateTime createdAt;
+
+  const RetryEntry({
+    required this.text,
+    required this.from,
+    required this.to,
+    required this.createdAt,
+  });
+}
+
+/// 翻译服务 — 多引擎自动回退 + 重试 + 离线重试队列
 ///
 /// 特性：
 /// - 多引擎优先级配置（默认 DeepSeek → OpenAI → Claude → DeepL → 百度）
@@ -28,6 +43,7 @@ class _EngineResult {
 /// - 级联回退（当前引擎全部失败 → 下一引擎）
 /// - 全链路超时保护
 /// - 与 EngineConfigService 集成，自动获取各引擎 API Key
+/// - 离线翻译失败自动入队，网络恢复后自动重试
 class TranslationService {
   static const int _maxRetries = 3;
   static const Duration _baseDelay = Duration(seconds: 1);
@@ -43,6 +59,18 @@ class TranslationService {
     TranslationEngine.deepl,
     TranslationEngine.baidu,
   ];
+
+  // ── 重试队列 ──
+  final List<RetryEntry> _retryQueue = [];
+
+  /// 回调：重试队列中的条目被成功翻译
+  void Function(RetryEntry entry, String translated)? onRetrySuccess;
+
+  /// 当前待重试条目数
+  int get pendingRetryCount => _retryQueue.length;
+
+  /// 最大重试次数
+  static const int maxRetryAttempts = 3;
 
   TranslationService({EngineConfigService? config})
     : _config = config ?? EngineConfigService();
@@ -95,7 +123,11 @@ class TranslationService {
       }
     }
 
-    // 所有引擎全部失败
+    // 所有引擎全部失败 → 加入重试队列
+    _retryQueue.add(RetryEntry(
+      text: text, from: from, to: to,
+      createdAt: DateTime.now(),
+    ));
     return '[翻译失败] $text';
   }
 
@@ -114,7 +146,8 @@ class TranslationService {
           return await _callOpenAICompatible(
             baseUrl: await _config.getBaseUrl(engine) ??
                 'https://api.deepseek.com/v1',
-            model: 'deepseek-chat',
+            model: await _config.getModelName(engine) ??
+                _config.defaultModelName(engine),
             apiKey: apiKey ?? '',
             text: text, from: from, to: to,
             engineName: 'DeepSeek',
@@ -123,7 +156,8 @@ class TranslationService {
           return await _callOpenAICompatible(
             baseUrl: await _config.getBaseUrl(engine) ??
                 'https://api.openai.com/v1',
-            model: 'gpt-4o-mini',
+            model: await _config.getModelName(engine) ??
+                _config.defaultModelName(engine),
             apiKey: apiKey ?? '',
             text: text, from: from, to: to,
             engineName: 'OpenAI',
@@ -134,6 +168,8 @@ class TranslationService {
                 'https://api.anthropic.com/v1',
             apiKey: apiKey ?? '',
             text: text, from: from, to: to,
+            model: await _config.getModelName(engine) ??
+                _config.defaultModelName(engine),
           );
         case TranslationEngine.deepl:
           return await _callDeepL(
@@ -232,6 +268,7 @@ class TranslationService {
     required String text,
     required String from,
     required String to,
+    String? model,
   }) async {
     if (apiKey.isEmpty) {
       return _EngineResult(success: false, text: '', error: 'no api key');
@@ -246,7 +283,7 @@ class TranslationService {
         'anthropic-version': '2023-06-01',
       },
       body: jsonEncode({
-        'model': 'claude-3-haiku-20240307',
+        'model': model ?? 'claude-3-haiku-20240307',
         'max_tokens': 256,
         'messages': [
           {
@@ -419,6 +456,44 @@ class TranslationService {
       'vi-VN': 'vie',
     };
     return map[code] ?? 'en';
+  }
+
+  // ── 重试队列 ──
+
+  /// 重试所有失败的翻译条目
+  ///
+  /// 返回本次成功重试的条数。
+  /// 重试成功的条目从队列移除，失败的继续保留等待下次重试。
+  Future<int> retryFailed() async {
+    if (_retryQueue.isEmpty) return 0;
+
+    int successCount = 0;
+    final snapshot = List<RetryEntry>.from(_retryQueue);
+
+    for (final entry in snapshot) {
+      if (entry.createdAt.isBefore(
+        DateTime.now().subtract(const Duration(hours: 1)),
+      )) {
+        // 超过 1 小时的旧条目不再重试，直接从队列移除
+        _retryQueue.remove(entry);
+        continue;
+      }
+
+      final result = await translate(entry.text, entry.from, entry.to);
+      if (!result.startsWith('[翻译失败]')) {
+        // 重试成功
+        _retryQueue.remove(entry);
+        successCount++;
+        onRetrySuccess?.call(entry, result);
+      }
+    }
+
+    return successCount;
+  }
+
+  /// 清空重试队列
+  void clearRetryQueue() {
+    _retryQueue.clear();
   }
 
   /// MD5 签名

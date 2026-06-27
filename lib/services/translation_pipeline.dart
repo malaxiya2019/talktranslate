@@ -68,6 +68,18 @@ class TranslationPipeline {
 
   void setTtsEnabled(bool v) => _ttsEnabled = v;
 
+  /// 当前待重试的失败翻译条目数
+  int get pendingRetryCount => _translator.pendingRetryCount;
+
+  /// 重试所有失败的翻译
+  Future<int> retryFailed() => _translator.retryFailed();
+
+  /// 重试成功的回调
+  void Function(RetryEntry entry, String translated)? get onRetrySuccess =>
+      _translator.onRetrySuccess;
+  set onRetrySuccess(void Function(RetryEntry entry, String translated)? cb) =>
+      _translator.onRetrySuccess = cb;
+
   // ── 对外翻译（对方说的 → 翻译给我听）──
 
   Future<String> translate(String text, {String? from, String? to}) async {
@@ -101,45 +113,64 @@ class TranslationPipeline {
 
   void _listen() async {
     while (_running) {
-      final completer = Completer<void>();
-      String text = '';
-
-      await _speech!.listen(
-        onResult: (r) {
-          text = r.recognizedWords;
-          if (r.finalResult && !completer.isCompleted) completer.complete();
-        },
-        listenOptions: stt.SpeechListenOptions(
-          localeId: LanguageUtil.sttLocale(_myLang),
-          cancelOnError: true,
-          partialResults: true,
-          listenMode: stt.ListenMode.confirmation,
-          pauseFor: const Duration(seconds: 2),
-        ),
-      );
-
-      await Future.any([
-        completer.future,
-        Future.delayed(const Duration(seconds: 5)),
-      ]);
-
-      await _speech!.stop();
-
-      if (text.isNotEmpty) {
-        final translated = await _translator.translate(
-          text, _myLang, _peerLang,
-        );
-        _resultCtl.add(
-          TranslationResult(
-            original: text,
-            translated: translated,
-            sourceLang: _myLang,
-            targetLang: _peerLang,
+      // 事件驱动监听：不再轮询 stop/restart
+      // pauseFor 参数控制静默自动停止，无需人工超时
+      try {
+        await _speech!.listen(
+          onResult: (r) {
+            if (r.finalResult && r.recognizedWords.isNotEmpty) {
+              _onSpeechResult(r.recognizedWords);
+            }
+          },
+          listenOptions: stt.SpeechListenOptions(
+            localeId: LanguageUtil.sttLocale(_myLang),
+            cancelOnError: true,
+            partialResults: true,
+            listenMode: stt.ListenMode.confirmation,
+            pauseFor: const Duration(seconds: 2),
           ),
         );
-        onMySpeech?.call(text, translated);
+      } catch (_) {
+        // 监听异常退出（如语音权限丢失），短暂等待后重试
       }
-      await Future.delayed(const Duration(milliseconds: 300));
+
+      // listen() 因 pauseFor 静默超时或异常自然结束
+      // 如果仍在运行，短暂停顿后重新开始监听
+      if (_running) {
+        await Future.delayed(const Duration(milliseconds: 200));
+      }
+    }
+  }
+
+  /// 事件驱动：收到一次完整语音结果后立即处理
+  void _onSpeechResult(String text) {
+    // 异步处理，不阻塞 onResult 回调
+    unawaited(_processSpeechResult(text));
+  }
+
+  Future<void> _processSpeechResult(String text) async {
+    if (text.isEmpty) return;
+    try {
+      final translated = await _translator.translate(text, _myLang, _peerLang);
+      _resultCtl.add(
+        TranslationResult(
+          original: text,
+          translated: translated,
+          sourceLang: _myLang,
+          targetLang: _peerLang,
+        ),
+      );
+      onMySpeech?.call(text, translated);
+    } catch (e) {
+      // 翻译失败时仍保留原文，让 UI 层决定如何处理
+      _resultCtl.add(
+        TranslationResult(
+          original: text,
+          translated: '[翻译失败]',
+          sourceLang: _myLang,
+          targetLang: _peerLang,
+        ),
+      );
     }
   }
 

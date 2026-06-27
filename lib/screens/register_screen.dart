@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
+import '../providers/settings_provider.dart';
 import 'dart:convert';
 import '../providers/app_provider.dart';
 import '../l10n/l10n.dart';
@@ -43,8 +44,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     setState(() => _loading = true);
 
     try {
-      final p = context.read<AppProvider>();
-      final baseUrl = p.serverUrl.replaceAll('wss://', 'https://').replaceAll('ws://', 'http://');
+      final baseUrl = context.read<SettingsProvider>().serverUrl
+          .replaceAll('wss://', 'https://').replaceAll('ws://', 'http://');
       final url = '$baseUrl/api/register';
       // Also try without the path if it's a cloudflare tunnel
       final resp = await http.post(

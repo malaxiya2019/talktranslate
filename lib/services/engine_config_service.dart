@@ -4,6 +4,7 @@ import 'dart:convert';
 
 /// 可用的翻译引擎
 enum TranslationEngine {
+  /// 系统内置引擎（预留，当前未实现，返回错误提示）
   system,
   deepseek,
   openai,
@@ -43,6 +44,34 @@ class EngineConfigService {
 
   Future<String?> getBaseUrl(TranslationEngine engine) async {
     return await _secureStorage.read(key: 'BASE_URL_${engine.name}');
+  }
+
+  // ── 模型名管理 ──
+
+  Future<void> saveModelName(TranslationEngine engine, String model) async {
+    await _secureStorage.write(key: 'MODEL_${engine.name}', value: model);
+  }
+
+  Future<String?> getModelName(TranslationEngine engine) async {
+    return await _secureStorage.read(key: 'MODEL_${engine.name}');
+  }
+
+  /// 默认模型名（当用户未自定义时使用）
+  String defaultModelName(TranslationEngine engine) {
+    switch (engine) {
+      case TranslationEngine.deepseek:
+        return 'deepseek-chat';
+      case TranslationEngine.openai:
+        return 'gpt-4o-mini';
+      case TranslationEngine.claude:
+        return 'claude-3-haiku-20240307';
+      case TranslationEngine.deepl:
+        return ''; // DeepL 无模型概念
+      case TranslationEngine.baidu:
+        return ''; // 百度翻译无模型概念
+      case TranslationEngine.system:
+        return '';
+    }
   }
 
   // ── 引擎终结点 ──

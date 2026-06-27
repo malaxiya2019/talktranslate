@@ -23,11 +23,7 @@ void main() {
       final ok = await engine.init(useMlKit: false);
       expect(ok, isTrue);
       expect(engine.isAvailable, isTrue);
-      expect(
-        engine.status == EdgeAIStatus.partial ||
-        engine.status == EdgeAIStatus.ready,
-        isTrue,
-      );
+      expect(engine.status, equals(EdgeAIStatus.partial));
     });
 
     test('dispose resets status', () async {

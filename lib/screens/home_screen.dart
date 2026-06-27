@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
+import '../providers/call_provider.dart';
+import '../providers/settings_provider.dart';
 import '../providers/login_provider.dart';
 import '../widgets/language_selector_bottom_sheet.dart';
 import 'call_screen.dart';
@@ -284,7 +286,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     final url = await _showDevDialog(context);
                     if (url != null) {
                       _serverCtl.text = url;
-                      await p.setServer(url);
+                      await context.read<SettingsProvider>().setServer(url);
                     }
                   }
                 },
@@ -522,7 +524,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           _codeCtl.text.length >= 4)
                       ? () async {
                             await _loginProvider.verifySmsCode(_codeCtl.text);
-                            await p.setServer(_serverCtl.text.trim());
+                            await context.read<SettingsProvider>().setServer(_serverCtl.text.trim());
                             await p.login(_loginProvider.e164Phone);
                             if (mounted && p.connected) {
                               Navigator.pushReplacementNamed(context, '/app');
@@ -909,7 +911,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             size: 22,
                           ),
                           onPressed: () {
-                            p.call(user);
+                            context.read<CallProvider>().call(user);
                             _pushCallScreen();
                           },
                         ),
@@ -949,7 +951,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 final phone = phoneCtl.text.trim();
                 if (phone.isNotEmpty) {
                   Navigator.pop(ctx);
-                  context.read<AppProvider>().call(phone);
+                  context.read<CallProvider>().call(phone);
                   _pushCallScreen();
                 }
               },

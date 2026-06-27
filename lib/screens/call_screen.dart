@@ -2,12 +2,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/call.dart';
-import '../providers/app_provider.dart';
+import '../providers/call_provider.dart';
 import '../widgets/common/avatar.dart';
 import '../widgets/common/glass_container.dart';
 import '../widgets/call/connection_status_card.dart';
 import '../widgets/call/call_actions_bar.dart';
-import '../widgets/call/call_timer.dart';
+
 import '../widgets/chat/message_bubble.dart';
 import '../widgets/chat/translation_card.dart';
 import '../l10n/l10n.dart';
@@ -70,10 +70,10 @@ class _CallScreenState extends State<CallScreen>
   }
 
   void _onAction(ActionType type) {
-    final p = context.read<AppProvider>();
+    final cp = context.read<CallProvider>();
     switch (type) {
       case ActionType.minimize:
-        p.enterBackgroundMode();
+        cp.enterBackgroundMode();
         if (mounted) Navigator.pop(context);
         break;
       case ActionType.mute:
@@ -84,15 +84,15 @@ class _CallScreenState extends State<CallScreen>
         break;
       case ActionType.hangup:
         _animateExit().then((_) {
-          p.hangup();
+          cp.hangup();
           if (mounted) Navigator.pop(context);
         });
         break;
       case ActionType.answer:
-        p.accept();
+        cp.accept();
         break;
       case ActionType.reject:
-        p.reject();
+        cp.reject();
         if (mounted) Navigator.pop(context);
         break;
     }
@@ -109,32 +109,26 @@ class _CallScreenState extends State<CallScreen>
               opacity: _exitFade,
               child: ScaleTransition(
                 scale: _exitScale,
-                child: Selector<AppProvider, CallState>(
-                  selector: (_, p) => p.callState,
-                  builder: (context, st, _) {
-                    if (st == CallState.inCall && _timer == null) _startTimer();
-                    if (st == CallState.idle) {
-                      WidgetsBinding.instance.addPostFrameCallback(
-                        (_) => Navigator.pop(context),
-                      );
-                    }
-                    return SafeArea(child: _buildSwipeableBody(st));
-                  },
-                ),
+                child: _buildCallBody(),
               ),
             )
-          : Selector<AppProvider, CallState>(
-              selector: (_, p) => p.callState,
-              builder: (context, st, _) {
-                if (st == CallState.inCall && _timer == null) _startTimer();
-                if (st == CallState.idle) {
-                  WidgetsBinding.instance.addPostFrameCallback(
-                    (_) => Navigator.pop(context),
-                  );
-                }
-                return SafeArea(child: _buildSwipeableBody(st));
-              },
-            ),
+          : _buildCallBody(),
+    );
+  }
+
+  /// 通话主体内容（Selector 隔离，仅 CallState 变化时重建）
+  Widget _buildCallBody() {
+    return Selector<CallProvider, CallState>(
+      selector: (_, cp) => cp.callState,
+      builder: (context, st, _) {
+        if (st == CallState.inCall && _timer == null) _startTimer();
+        if (st == CallState.idle) {
+          WidgetsBinding.instance.addPostFrameCallback(
+            (_) => Navigator.pop(context),
+          );
+        }
+        return SafeArea(child: _buildSwipeableBody(st));
+      },
     );
   }
 
@@ -189,43 +183,41 @@ class _CallScreenState extends State<CallScreen>
   // ── 顶部栏（CallState Selector 驱动）──
 
   Widget _buildTopBar(CallState st) {
-    return Container(
+    return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Row(
         children: [
-          Selector<AppProvider, int>(
-            selector: (_, p) => p.pingMs,
-            builder: (_, ping, __) => ConnectionStatusCard(
-              state: st,
-              pingMs: st == CallState.inCall ? ping : null,
+          if (st == CallState.inCall)
+            Selector<CallProvider, int>(
+              selector: (_, cp) => cp.pingMs,
+              builder: (_, ms, __) => ConnectionStatusCard(state: st, pingMs: ms),
+            ),
+          const Spacer(),
+          GestureDetector(
+            onTap: () => _onAction(ActionType.minimize),
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Icon(Icons.keyboard_arrow_down,
+                  color: Colors.white70, size: 20),
             ),
           ),
-          Spacer(),
-          if (st == CallState.inCall) CallTimer(elapsed: _elapsed),
+          const SizedBox(width: 8),
         ],
       ),
     );
   }
 
-  // ── 主体：AnimatedSwitcher 过渡 ──
+  // ── 主体 ──
 
   Widget _buildBody(CallState st) {
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 400),
-      transitionBuilder: (child, anim) => FadeTransition(
-        opacity: anim,
-        child: ScaleTransition(
-          scale: Tween<double>(
-            begin: 0.95,
-            end: 1.0,
-          ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
-          child: child,
-        ),
-      ),
-      child: st == CallState.connecting || st == CallState.ringing
-          ? _buildRingingView(st)
-          : _buildInCallView(),
-    );
+    return st == CallState.connecting ||
+            st == CallState.ringing
+        ? _buildRingingView(st)
+        : _buildInCallView();
   }
 
   // ── 重连提示横幅 ──
@@ -273,9 +265,8 @@ class _CallScreenState extends State<CallScreen>
       key: const ValueKey('ringing'),
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        // peerPhone 单独 Selector
-        Selector<AppProvider, String>(
-          selector: (_, p) => p.peerPhone ?? '',
+        Selector<CallProvider, String>(
+          selector: (_, cp) => cp.peerPhone ?? '',
           builder: (_, phone, __) => Avatar(
             name: phone.isNotEmpty ? phone : '?',
             size: 88,
@@ -283,8 +274,8 @@ class _CallScreenState extends State<CallScreen>
           ),
         ),
         SizedBox(height: 16),
-        Selector<AppProvider, String>(
-          selector: (_, p) => p.peerPhone ?? '',
+        Selector<CallProvider, String>(
+          selector: (_, cp) => cp.peerPhone ?? '',
           builder: (_, phone, __) => Text(
             phone,
             style: const TextStyle(
@@ -328,8 +319,8 @@ class _CallScreenState extends State<CallScreen>
           ],
         ),
         SizedBox(height: 4),
-        Selector<AppProvider, String>(
-          selector: (_, p) => p.peerPhone ?? '',
+        Selector<CallProvider, String>(
+          selector: (_, cp) => cp.peerPhone ?? '',
           builder: (_, phone, __) => Text(
             phone,
             style: const TextStyle(fontSize: 16, color: Colors.white54),
@@ -345,8 +336,8 @@ class _CallScreenState extends State<CallScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Selector<AppProvider, String>(
-                  selector: (_, p) => p.subtitle,
+                Selector<CallProvider, String>(
+                  selector: (_, cp) => cp.subtitle,
                   builder: (_, text, __) => MessageBubble(
                     speaker: Speaker.peer,
                     text: text,
@@ -355,8 +346,8 @@ class _CallScreenState extends State<CallScreen>
                   ),
                 ),
                 SizedBox(height: 10),
-                Selector<AppProvider, String>(
-                  selector: (_, p) => p.subtitleTranslated,
+                Selector<CallProvider, String>(
+                  selector: (_, cp) => cp.subtitleTranslated,
                   builder: (_, translated, __) => TranslationCard(
                     original: '',
                     translated: translated,
@@ -379,8 +370,8 @@ class _CallScreenState extends State<CallScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Selector<AppProvider, String>(
-                  selector: (_, p) => p.mySpeech,
+                Selector<CallProvider, String>(
+                  selector: (_, cp) => cp.mySpeech,
                   builder: (_, text, __) => MessageBubble(
                     speaker: Speaker.me,
                     text: text,
@@ -389,8 +380,8 @@ class _CallScreenState extends State<CallScreen>
                   ),
                 ),
                 SizedBox(height: 8),
-                Selector<AppProvider, String>(
-                  selector: (_, p) => p.mySpeechTranslated,
+                Selector<CallProvider, String>(
+                  selector: (_, cp) => cp.mySpeechTranslated,
                   builder: (_, translated, __) => TranslationCard(
                     original: '',
                     translated: translated,

@@ -158,5 +158,78 @@ void main() {
         }
       }
     });
+
+    test('default model names are non-empty for API engines', () {
+      final service = EngineConfigService();
+      expect(service.defaultModelName(TranslationEngine.deepseek), isNotEmpty);
+      expect(service.defaultModelName(TranslationEngine.openai), isNotEmpty);
+      expect(service.defaultModelName(TranslationEngine.claude), isNotEmpty);
+    });
+
+    test('default model names are empty for non-model engines', () {
+      final service = EngineConfigService();
+      expect(service.defaultModelName(TranslationEngine.deepl), isEmpty);
+      expect(service.defaultModelName(TranslationEngine.baidu), isEmpty);
+      expect(service.defaultModelName(TranslationEngine.system), isEmpty);
+    });
+  });
+
+  group('TranslationService retry queue', () {
+    test('初始队列为空', () {
+      final service = TranslationService();
+      expect(service.pendingRetryCount, equals(0));
+    });
+
+    test('翻译失败后自动入队', () async {
+      final service = TranslationService();
+      final result = await service.translate('Hello', 'en-US', 'zh-CN');
+      expect(result, startsWith('[翻译失败]'));
+      expect(service.pendingRetryCount, greaterThan(0));
+    });
+
+    test('clearRetryQueue 清空队列', () async {
+      final service = TranslationService();
+      await service.translate('A', 'en-US', 'zh-CN');
+      await service.translate('B', 'en-US', 'zh-CN');
+      expect(service.pendingRetryCount, greaterThanOrEqualTo(2));
+      service.clearRetryQueue();
+      expect(service.pendingRetryCount, equals(0));
+    });
+
+    test('retryFailed 重试失败条目', () async {
+      final service = TranslationService();
+      await service.translate('Hello', 'en-US', 'zh-CN');
+      await service.retryFailed();
+      // 所有引擎都失败，重试后条目仍在队列
+      expect(service.pendingRetryCount, greaterThan(0));
+    });
+
+    test('onRetrySuccess 回调', () async {
+      final service = TranslationService();
+      String? capturedText;
+      service.onRetrySuccess = (entry, translated) {
+        capturedText = entry.text;
+      };
+      await service.translate('Hello', 'en-US', 'zh-CN');
+      // retryFailed 仍然失败，不会触发回调
+      await service.retryFailed();
+      expect(capturedText, isNull);
+    });
+  });
+
+  group('RetryEntry model', () {
+    test('构造和属性', () {
+      final now = DateTime.now();
+      final entry = RetryEntry(
+        text: 'Hello',
+        from: 'en-US',
+        to: 'zh-CN',
+        createdAt: now,
+      );
+      expect(entry.text, equals('Hello'));
+      expect(entry.from, equals('en-US'));
+      expect(entry.to, equals('zh-CN'));
+      expect(entry.createdAt, equals(now));
+    });
   });
 }

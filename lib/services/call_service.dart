@@ -475,6 +475,7 @@ class CallService {
   // ── 清理 ──
 
   /// 断线重连后回放字幕缓存，避免冷启动空白
+  /// 静默恢复，不打扰用户
   void _replaySubtitleBuffer() {
     final entries = _subtitleBuffer.drain();
     if (entries.isEmpty) return;
@@ -486,7 +487,6 @@ class CallService {
       });
       OverlayService().updateSubtitle(entry.text, entry.translated);
     }
-    _emitToast('已恢复 ${entries.length} 条历史字幕');
   }
 
 

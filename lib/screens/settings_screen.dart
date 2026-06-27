@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/app_provider.dart';
+import '../providers/settings_provider.dart';
 import '../providers/app_language_provider.dart';
 import 'engine_config_screen.dart';
 import '../services/keep_alive_helper.dart';
@@ -64,20 +64,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _loadSettings() {
-    final p = context.read<AppProvider>();
-    _apiKeyCtl.text = p.apiKey;
-    _serverCtl.text = p.serverUrl;
+    final s = context.read<SettingsProvider>();
+    _apiKeyCtl.text = s.apiKey;
+    _serverCtl.text = s.serverUrl;
     setState(() {
-      _myLang = AppLanguage.fromCode(p.myLang);
-      _peerLang = AppLanguage.fromCode(p.peerLang);
-      _ttsEnabled = p.ttsEnabled;
+      _myLang = AppLanguage.fromCode(s.myLang);
+      _peerLang = AppLanguage.fromCode(s.peerLang);
+      _ttsEnabled = s.ttsEnabled;
     });
   }
 
   Future<void> _save() async {
     setState(() => _saving = true);
-    final p = context.read<AppProvider>();
-    await p.saveSettings(
+    final s = context.read<SettingsProvider>();
+    await s.saveSettings(
       apiKey: _apiKeyCtl.text.trim(),
       serverUrl: _serverCtl.text.trim(),
       myLang: _myLang.code,
