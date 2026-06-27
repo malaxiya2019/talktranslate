@@ -259,7 +259,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const Divider(height: 1),
             _switchTile(
-              icon: Icons.text_to_speech_outlined,
+              icon: Icons.record_voice_over,
               label: 'TTS 语音合成',
               subtitle: '将翻译结果朗读出来',
               value: _ttsEnabled,
@@ -275,7 +275,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _sectionHeader('🔊 音频', '音频输入输出设置'),
           _card([
             _switchTile(
-              icon: Icons.noise_control_outlined,
+              icon: Icons.hearing,
               label: '降噪',
               subtitle: '过滤背景噪音，提升识别准确率',
               value: _noiseSuppression,
@@ -355,7 +355,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           // 🛡️ 保活
           // ═══════════════════
           _sectionHeader('🛡️ 保活', '防止后台被系统杀死'),
-          const _KeepAliveCard(),
+          _KeepAliveCard(),
 
           const SizedBox(height: 20),
 
@@ -683,7 +683,7 @@ class _KeepAliveCardState extends State<_KeepAliveCard> {
                     style: TextStyle(fontSize: 12, color: Colors.orange[700]),
                   ),
                 ],
-                if (_status!.allOk) ...[
+                if (_status!.notificationOk && _status!.batteryOk) ...[
                   const SizedBox(height: 12),
                   Text('✅ 保活配置完成',
                     style: TextStyle(fontSize: 12, color: Colors.green[600]),
