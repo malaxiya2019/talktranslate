@@ -1,4 +1,4 @@
-name: Build TalkTranslate
+name: Build & Release TalkTranslate
 
 on:
   push:
@@ -17,6 +17,9 @@ on:
           - aab
           - both
 
+env:
+  FLUTTER_VERSION: '3.44.3'
+
 jobs:
   # ── 代码质量检查 ──
   analyze:
@@ -27,7 +30,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.44.3'
+          flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: 'stable'
           architecture: x64
 
@@ -44,18 +47,30 @@ jobs:
   build:
     needs: analyze
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 获取完整历史用于版本号
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.44.3'
+          flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: 'stable'
           architecture: x64
 
       - name: Get packages
         run: flutter pub get
+
+      # 提取版本号
+      - name: Extract version
+        id: version
+        run: |
+          VERSION=$(grep '^version: ' pubspec.yaml | sed 's/version: //')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Building v$VERSION"
 
       # 签名仅在 secrets 配置时启用
       - name: Decode keystore & create key.properties
@@ -74,7 +89,7 @@ jobs:
           storeFile=upload-keystore.jks
           EOF
 
-      - name: Build APK
+      - name: Build APK (split per ABI)
         if: ${{ github.event.inputs.build_type == 'apk' || github.event.inputs.build_type == 'both' || github.event_name == 'push' }}
         run: flutter build apk --release --split-per-abi
 
@@ -82,17 +97,77 @@ jobs:
         if: ${{ github.event.inputs.build_type == 'aab' || github.event.inputs.build_type == 'both' }}
         run: flutter build appbundle --release
 
-      - name: Upload APK artifacts
-        if: ${{ github.event.inputs.build_type == 'apk' || github.event.inputs.build_type == 'both' || github.event_name == 'push' }}
+      - name: Upload APK artifacts (CI)
         uses: actions/upload-artifact@v4
         with:
           name: talktranslate-apk-${{ github.sha }}
           path: |
             build/app/outputs/flutter-apk/app-*-release.apk
+          if-no-files-found: ignore
 
       - name: Upload AAB artifact
-        if: ${{ github.event.inputs.build_type == 'aab' || github.event.inputs.build_type == 'both' }}
         uses: actions/upload-artifact@v4
         with:
           name: talktranslate-aab-${{ github.sha }}
           path: build/app/outputs/bundle/release/app-release.aab
+          if-no-files-found: ignore
+
+  # ── GitHub Release 发布 ──
+  release:
+    if: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/release') }}
+    needs: [analyze, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # 生成 changelog：上次 tag → 当前
+      - name: Generate release notes
+        id: notes
+        run: |
+          PREV_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -z "$PREV_TAG" ]; then
+            echo "notes<<EOF" >> $GITHUB_OUTPUT
+            echo "## 🚀 首次发布" >> $GITHUB_OUTPUT
+            git log --oneline --format='- %s' $(git rev-list --max-parents=0 HEAD)..HEAD 2>/dev/null >> $GITHUB_OUTPUT || true
+            echo "EOF" >> $GITHUB_OUTPUT
+          else
+            echo "notes<<EOF" >> $GITHUB_OUTPUT
+            echo "## 📋 更新日志 (${{ needs.build.outputs.version }})" >> $GITHUB_OUTPUT
+            echo "" >> $GITHUB_OUTPUT
+            git log --oneline --format='- %s' $PREV_TAG..HEAD 2>/dev/null >> $GITHUB_OUTPUT || true
+            echo "EOF" >> $GITHUB_OUTPUT
+          fi
+
+      # 下载 APK 构建产物
+      - name: Download APK artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: talktranslate-apk-${{ github.sha }}
+          path: release-apks
+        continue-on-error: true
+
+      - name: List APK files
+        run: |
+          echo "=== APK files ==="
+          ls -lh release-apks/ 2>/dev/null || echo "(no APKs downloaded)"
+          echo "=== AAB files ==="
+          ls -lh *.aab 2>/dev/null || echo "(no AAB files)"
+
+      # 创建 Release（用 softprops/action-gh-release）
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ needs.build.outputs.version }}
+          name: TalkTranslate v${{ needs.build.outputs.version }}
+          body: ${{ steps.notes.outputs.notes }}
+          files: |
+            release-apks/*
+          draft: false
+          prerelease: ${{ github.ref == 'refs/heads/release' }}
+          generate_release_notes: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

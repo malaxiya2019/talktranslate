@@ -6,7 +6,7 @@
 
 [![Build APK](https://github.com/malaxiya2019/talktranslate/actions/workflows/build-apk.yml/badge.svg)](https://github.com/malaxiya2019/talktranslate/actions/workflows/build-apk.yml)
 [![GitHub release](https://img.shields.io/badge/version-2.0.2-blue)](https://github.com/malaxiya2019/talktranslate/releases)
-![Tests](https://img.shields.io/badge/tests-105%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-185%20passing-brightgreen)
 
 </div>
 

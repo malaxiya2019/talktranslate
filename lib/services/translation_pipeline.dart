@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:flutter_tts/flutter_tts.dart';
+import '../models/language.dart';
 import 'translation_service.dart';
+import 'engine_config_service.dart';
 
 /// 翻译结果
 class TranslationResult {
@@ -22,7 +24,7 @@ class TranslationResult {
 ///
 /// 职责：
 ///   - 语音识别（STT）
-///   - AI 翻译
+///   - AI 翻译（多引擎自动回退）
 ///   - 语音朗读（TTS）
 ///
 /// 输出：Stream<TranslationResult>
@@ -43,15 +45,22 @@ class TranslationPipeline {
   final _resultCtl = StreamController<TranslationResult>.broadcast();
   Stream<TranslationResult> get onResult => _resultCtl.stream;
 
-  TranslationPipeline()
-    : _translator = TranslationService(),
+  TranslationPipeline({EngineConfigService? config})
+    : _translator = TranslationService(config: config),
       _tts = FlutterTts() {
     _initTts();
   }
 
   // ── 配置 ──
 
+  /// 设置 DeepSeek API Key（兼容旧接口）
   void setApiKey(String key) => _translator.setApiKey(key);
+
+  /// 设置引擎优先级列表
+  void setEnginePriority(List<TranslationEngine> engines) {
+    _translator.setEnginePriority(engines);
+  }
+
   void setLanguages(String my, String peer) {
     _myLang = my;
     _peerLang = peer;
@@ -63,28 +72,24 @@ class TranslationPipeline {
 
   Future<String> translate(String text, {String? from, String? to}) async {
     if (text.isEmpty) return '';
-    try {
-      return await _translator.translate(
-        text,
-        from ?? _peerLang,
-        to ?? _myLang,
-      );
-    } catch (_) {
-      return '[翻译失败] $text';
-    }
+    // TranslationService 内部已处理所有错误和回退
+    return await _translator.translate(
+      text,
+      from ?? _peerLang,
+      to ?? _myLang,
+    );
   }
 
   Future<void> speak(String text, {String? lang}) async {
     if (!_ttsEnabled || text.isEmpty) return;
     try {
-      await _tts.setLanguage(_mapTtsLang(lang ?? _myLang));
+      await _tts.setLanguage(LanguageUtil.ttsLocale(lang ?? _myLang));
       await _tts.speak(text);
     } catch (_) {}
   }
 
   // ── 本端语音识别（我说的 → 翻译给对面）──
 
-  /// 开始语音识别
   Future<void> start() async {
     if (_running) return;
     _speech ??= stt.SpeechToText();
@@ -105,7 +110,7 @@ class TranslationPipeline {
           if (r.finalResult && !completer.isCompleted) completer.complete();
         },
         listenOptions: stt.SpeechListenOptions(
-          localeId: _sttLocale(_myLang),
+          localeId: LanguageUtil.sttLocale(_myLang),
           cancelOnError: true,
           partialResults: true,
           listenMode: stt.ListenMode.confirmation,
@@ -121,10 +126,9 @@ class TranslationPipeline {
       await _speech!.stop();
 
       if (text.isNotEmpty) {
-        String translated = '';
-        try {
-          translated = await _translator.translate(text, _myLang, _peerLang);
-        } catch (_) {}
+        final translated = await _translator.translate(
+          text, _myLang, _peerLang,
+        );
         _resultCtl.add(
           TranslationResult(
             original: text,
@@ -146,44 +150,9 @@ class TranslationPipeline {
 
   bool get isRunning => _running;
 
-  // ── 辅助 ──
-
   void dispose() {
     stop();
     _resultCtl.close();
-  }
-
-  String _sttLocale(String code) {
-    const map = {
-      'zh-CN': 'zh_CN',
-      'en-US': 'en_US',
-      'ja-JP': 'ja_JP',
-      'ko-KR': 'ko_KR',
-      'es-ES': 'es_ES',
-      'fr-FR': 'fr_FR',
-      'de-DE': 'de_DE',
-      'pt-BR': 'pt_BR',
-      'ru-RU': 'ru_RU',
-      'ar-SA': 'ar_SA',
-      'th-TH': 'th_TH',
-      'vi-VN': 'vi_VN',
-    };
-    return map[code] ?? 'en_US';
-  }
-
-  String _mapTtsLang(String code) {
-    const map = {
-      'zh-CN': 'zh-CN',
-      'en-US': 'en-US',
-      'ja-JP': 'ja-JP',
-      'ko-KR': 'ko-KR',
-      'es-ES': 'es-ES',
-      'fr-FR': 'fr-FR',
-      'de-DE': 'de-DE',
-      'pt-BR': 'pt-BR',
-      'ru-RU': 'ru-RU',
-    };
-    return map[code] ?? 'en-US';
   }
 
   Future<void> _initTts() async {

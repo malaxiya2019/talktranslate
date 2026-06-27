@@ -34,13 +34,35 @@
 | 4 | 翻译 HTTP 请求无超时限制 | ✅ |
 | 5 | "新建通话"按钮 onTap 为空 | ✅ |
 
-## ⬜ 5. 构建验证
+## ✅ 5. 自动发布
+
+- [x] CI 构建流程包含 Release 自动发布：
+  - [x] `analyze` job — `flutter analyze` + `flutter test`
+  - [x] `build` job — `flutter build apk --release --split-per-abi` + AAB
+  - [x] `release` job — `softprops/action-gh-release@v2` 自动创建 Release
+  - [x] Release 标签自动从 `pubspec.yaml` 版本号生成
+  - [x] Release 说明自动从 `git log` 生成（上次 tag 以来的 commit）
+  - [x] `release` 分支的 Release 标记为 prerelease
+- [x] CI secrets 仍需手动配置：`KEYSTORE_BASE64`, `KEY_STORE_PASSWORD`, `KEY_PASSWORD`, `KEY_ALIAS`
+
+## ⬜ 6. 构建验证
 
 ```bash
 flutter clean
 flutter pub get
 flutter analyze              # 零警告零错误 ✅
-flutter test                 # 105 tests passed ✅
+flutter test                 # 185 tests passed ✅
+
+# 发布构建
+flutter build apk --release --split-per-abi
+flutter build appbundle --release
+```
+
+```bash
+flutter clean
+flutter pub get
+flutter analyze              # 零警告零错误 ✅
+flutter test                 # 185 tests passed ✅
 
 # 发布构建
 flutter build apk --release --split-per-abi
@@ -56,7 +78,7 @@ flutter build appbundle --release
 - [ ] 真机测试：杀进程后重新打开 → 状态恢复
 - [ ] 真机测试：新建通话对话框 → 输入号码 → 呼叫
 
-## ⬜ 6. Google Play 发布
+## ⬜ 7. Google Play 发布
 
 - [ ] 创建 Google Play Console 开发者账号
 - [ ] 创建应用（对应 `com.talktranslate.talktranslate`）
@@ -70,7 +92,7 @@ flutter build appbundle --release
 - [ ] 内容分级问卷
 - [ ] 定价与分发：免费
 
-## ✅ 7. Android 兼容性
+## ✅ 8. Android 兼容性
 
 | 检查项 | 要求 | 状态 |
 |--------|------|:----:|
@@ -80,7 +102,7 @@ flutter build appbundle --release
 | 64-bit abi | arm64-v8a | ✅ split-per-abi |
 | x86_64 | 模拟器 | ✅ split-per-abi |
 
-## ⬜ 8. 国产 ROM 适配
+## ⬜ 9. 国产 ROM 适配
 
 | 品牌 | 需要用户手动开启 |
 |------|-----------------|
@@ -89,7 +111,7 @@ flutter build appbundle --release
 | OPPO/VIVO | 设置 → 应用管理 → 悬浮窗 |
 | 三星 | 默认允许 |
 
-## ⬜ 9. 发布前最终检查
+## ⬜ 10. 发布前最终检查
 
 - [ ] 清空 SharedPreferences 后首次启动正常
 - [ ] 无 API Key 时优雅提示（不崩溃）

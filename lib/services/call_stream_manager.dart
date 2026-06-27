@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
+import '../models/language.dart';
 import 'translation_service.dart';
+import 'engine_config_service.dart';
 
 /// 翻译结果载荷
 class TranslationPayload {
@@ -21,7 +23,7 @@ class TranslationPayload {
 ///
 /// 两条管线互不阻塞：语音流不影响翻译，翻译不回堵语音。
 class CallStreamManager {
-  final TranslationService _translator = TranslationService();
+  final TranslationService _translator;
   stt.SpeechToText? _speech;
 
   /// VAD 静音窗口（毫秒）— 对话翻译最优值 800ms
@@ -40,9 +42,15 @@ class CallStreamManager {
   /// Pipeline B 回调：本端语音识别完成时调用
   void Function(String text, String translated)? onMySpeechComplete;
 
+  CallStreamManager({EngineConfigService? config})
+    : _translator = TranslationService(config: config);
+
   // ── 配置 ──
 
   void setApiKey(String key) => _translator.setApiKey(key);
+  void setEnginePriority(List<TranslationEngine> engines) {
+    _translator.setEnginePriority(engines);
+  }
   void setLanguages(String my, String peer) {
     _myLang = my;
     _peerLang = peer;
@@ -85,7 +93,7 @@ class CallStreamManager {
           if (r.finalResult && !completer.isCompleted) completer.complete();
         },
         listenOptions: stt.SpeechListenOptions(
-          localeId: _sttLocale(_myLang),
+          localeId: LanguageUtil.sttLocale(_myLang),
           cancelOnError: true,
           partialResults: true,
           listenMode: stt.ListenMode.confirmation,
@@ -117,17 +125,6 @@ class CallStreamManager {
   Future<void> stopListening() async {
     _running = false;
     await _speech?.stop();
-  }
-
-  // ── 辅助 ──
-
-  String _sttLocale(String code) {
-    const map = {
-      'zh-CN': 'zh_CN', 'en-US': 'en_US', 'ja-JP': 'ja_JP',
-      'ko-KR': 'ko_KR', 'es-ES': 'es_ES', 'fr-FR': 'fr_FR',
-      'de-DE': 'de_DE', 'pt-BR': 'pt_BR', 'ru-RU': 'ru_RU',
-    };
-    return map[code] ?? 'en_US';
   }
 
   void dispose() {
